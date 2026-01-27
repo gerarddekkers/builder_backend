@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run Backend (Assessment Builder)",
+      "request": "launch",
+      "mainClass": "com.mentesme.builder.AssessmentBuilderApplication",
+      "projectName": "assessment-builder-backend",
+      "env": {
+        "SERVER_PORT": "8087",
+        "BUILDER_METRO_ENABLED": "true",
+        "BUILDER_METRO_DATASOURCE_URL": "jdbc:mysql://test-metro-db.cyi4arp1bouk.eu-west-1.rds.amazonaws.com:3306/metro?sslMode=REQUIRED",
+        "BUILDER_METRO_DATASOURCE_USERNAME": "mastermetro",
+        "BUILDER_METRO_DATASOURCE_PASSWORD": "${env:BUILDER_METRO_DATASOURCE_PASSWORD}"
+      }
+    }
+  ]
+}

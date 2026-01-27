@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Dev: Backend",
+			"type": "shell",
+			"command": "/bin/zsh",
+			"args": [
+				"-lc",
+				"bash backend/scripts/start-backend.sh"
+			],
+			"isBackground": true
+		},
+		{
+			"label": "Dev: Frontend",
+			"type": "shell",
+			"command": "/bin/zsh",
+			"args": [
+				"-lc",
+				"export PATH=\"/opt/homebrew/opt/node@18/bin:$PATH\" && cd frontend && npm run dev -- --host 0.0.0.0 --port 5173"
+			],
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Dev: Backend + Frontend",
+			"dependsOn": [
+				"Dev: Backend",
+				"Dev: Frontend"
+			],
+			"dependsOrder": "parallel",
+			"group": "build"
+		}
+	]
+}

@@ -1,0 +1,28 @@
+spring:
+  jackson:
+    serialization:
+      indent_output: true
+
+logging:
+  level:
+    com.zaxxer.hikari: DEBUG
+    org.springframework.jdbc: DEBUG
+
+builder:
+  integration:
+    competenceStartId: 2000
+    categoryStartId: 300
+    goalStartId: 300
+    questionnaireStartId: 200
+
+  ai:
+    apiKey: JOUW_API_KEY_HIER
+
+
+  metro:
+    enabled: true
+    datasource:
+      url: ${BUILDER_METRO_DATASOURCE_URL}
+      username: ${BUILDER_METRO_DATASOURCE_USERNAME}
+      password: ${BUILDER_METRO_DATASOURCE_PASSWORD}
+      driver-class-name: com.mysql.cj.jdbc.Driver
