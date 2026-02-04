@@ -14,7 +14,11 @@ builder:
       username: mastermetro
       password: DOQmUyfeuOQp3TIjr4NJ
       driver-class-name: com.mysql.cj.jdbc.Driver
-  ai:
-    apiUrl: https://api.openai.com/v1/chat/completions
-    apiKey: ${OPENAI_API_KEY:}
-    model: gpt-4o-mini
+  translation:
+    provider: google  # google or openai
+    google:
+      apiKey: ${GOOGLE_TRANSLATE_API_KEY:}
+    openai:
+      apiUrl: https://api.openai.com/v1/chat/completions
+      apiKey: ${OPENAI_API_KEY:}
+      model: gpt-4o-mini

@@ -10,6 +10,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,33 +23,101 @@ public class AiTranslationService {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    private final String apiUrl;
-    private final String apiKey;
-    private final String model;
+    private final String provider;
+    private final String googleApiKey;
+    private final String openaiApiUrl;
+    private final String openaiApiKey;
+    private final String openaiModel;
 
     public AiTranslationService(
-            @Value("${builder.ai.apiUrl:https://api.openai.com/v1/chat/completions}") String apiUrl,
-            @Value("${builder.ai.apiKey:}") String apiKey,
-            @Value("${builder.ai.model:gpt-4o-mini}") String model
+            @Value("${builder.translation.provider:google}") String provider,
+            @Value("${builder.translation.google.apiKey:}") String googleApiKey,
+            @Value("${builder.translation.openai.apiUrl:https://api.openai.com/v1/chat/completions}") String openaiApiUrl,
+            @Value("${builder.translation.openai.apiKey:}") String openaiApiKey,
+            @Value("${builder.translation.openai.model:gpt-4o-mini}") String openaiModel
     ) {
-        this.apiUrl = apiUrl;
-        this.apiKey = apiKey;
-        this.model = model;
+        this.provider = provider;
+        this.googleApiKey = googleApiKey;
+        this.openaiApiUrl = openaiApiUrl;
+        this.openaiApiKey = openaiApiKey;
+        this.openaiModel = openaiModel;
     }
 
     public TranslationResult translate(String sourceLanguage, String targetLanguage, List<String> texts) {
         if (texts == null || texts.isEmpty()) {
             return new TranslationResult(List.of(), null);
         }
-        if (apiKey == null || apiKey.isBlank()) {
-            return new TranslationResult(texts, "AI vertaling is niet geconfigureerd. Zet builder.ai.apiKey om vertaling te activeren.");
+
+        if ("google".equalsIgnoreCase(provider)) {
+            return translateWithGoogle(sourceLanguage, targetLanguage, texts);
+        } else {
+            return translateWithOpenAI(sourceLanguage, targetLanguage, texts);
+        }
+    }
+
+    private TranslationResult translateWithGoogle(String sourceLanguage, String targetLanguage, List<String> texts) {
+        if (googleApiKey == null || googleApiKey.isBlank()) {
+            return new TranslationResult(texts, "Google Translate is niet geconfigureerd. Zet GOOGLE_TRANSLATE_API_KEY environment variable.");
+        }
+
+        try {
+            List<String> translations = new ArrayList<>();
+
+            for (String text : texts) {
+                if (text == null || text.isBlank()) {
+                    translations.add(text);
+                    continue;
+                }
+
+                String url = "https://translation.googleapis.com/language/translate/v2?key=" + googleApiKey;
+
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("q", text);
+                payload.put("source", sourceLanguage);
+                payload.put("target", targetLanguage);
+                payload.put("format", "text");
+
+                String body = objectMapper.writeValueAsString(payload);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(10))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    return new TranslationResult(texts, "Google Translate faalde: " + response.statusCode() + " - " + response.body());
+                }
+
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode translatedText = root.at("/data/translations/0/translatedText");
+
+                if (translatedText.isMissingNode()) {
+                    return new TranslationResult(texts, "Google Translate gaf onverwacht antwoord");
+                }
+
+                translations.add(translatedText.asText());
+            }
+
+            return new TranslationResult(translations, null);
+
+        } catch (Exception ex) {
+            return new TranslationResult(texts, "Google Translate faalde: " + ex.getMessage());
+        }
+    }
+
+    private TranslationResult translateWithOpenAI(String sourceLanguage, String targetLanguage, List<String> texts) {
+        if (openaiApiKey == null || openaiApiKey.isBlank()) {
+            return new TranslationResult(texts, "OpenAI vertaling is niet geconfigureerd. Zet OPENAI_API_KEY environment variable.");
         }
 
         String systemPrompt = "You are a professional translator. Translate from " + sourceLanguage + " to " + targetLanguage +
                 ". Return ONLY a JSON array of strings in the same order. No extra text.";
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("model", model);
+        payload.put("model", openaiModel);
         payload.put("temperature", 0.2);
         payload.put("messages", List.of(
                 Map.of("role", "system", "content", systemPrompt),
@@ -58,31 +127,31 @@ public class AiTranslationService {
         try {
             String body = objectMapper.writeValueAsString(payload);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(apiUrl))
+                    .uri(URI.create(openaiApiUrl))
                     .timeout(Duration.ofSeconds(30))
-                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Authorization", "Bearer " + openaiApiKey)
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                return new TranslationResult(texts, "AI vertaling faalde: " + response.statusCode());
+                return new TranslationResult(texts, "OpenAI vertaling faalde: " + response.statusCode());
             }
 
             JsonNode root = objectMapper.readTree(response.body());
             JsonNode contentNode = root.at("/choices/0/message/content");
             if (contentNode.isMissingNode()) {
-                return new TranslationResult(texts, "AI vertaling faalde: leeg antwoord");
+                return new TranslationResult(texts, "OpenAI vertaling faalde: leeg antwoord");
             }
 
             List<String> translations = objectMapper.readValue(contentNode.asText(), objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
             if (translations.size() != texts.size()) {
-                return new TranslationResult(texts, "AI vertaling gaf een onverwachte lengte terug");
+                return new TranslationResult(texts, "OpenAI vertaling gaf een onverwachte lengte terug");
             }
             return new TranslationResult(translations, null);
         } catch (Exception ex) {
-            return new TranslationResult(texts, "AI vertaling faalde: " + ex.getMessage());
+            return new TranslationResult(texts, "OpenAI vertaling faalde: " + ex.getMessage());
         }
     }
 

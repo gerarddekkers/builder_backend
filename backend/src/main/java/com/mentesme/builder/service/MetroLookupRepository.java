@@ -114,6 +114,15 @@ public class MetroLookupRepository {
         return jdbcTemplate.query(translatedSql, rs -> rs.next() ? Optional.of(rs.getLong(1)) : Optional.empty(), name.trim());
     }
 
+    public boolean questionnaireNameExists(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        String sql = "SELECT COUNT(*) FROM questionnaires WHERE name = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, name.trim());
+        return count != null && count > 0;
+    }
+
     public long getMaxId(String table) {
         String sql = "SELECT COALESCE(MAX(id), 0) FROM " + table;
         Long result = jdbcTemplate.queryForObject(sql, Long.class);

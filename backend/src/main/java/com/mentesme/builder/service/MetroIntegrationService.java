@@ -7,6 +7,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,10 +55,13 @@ public class MetroIntegrationService {
         String assessmentName = safeTrim(request.assessmentName());
         String truncatedName = truncate(assessmentName, 30, warnings);
 
+        // Check if questionnaire name already exists and make it unique if needed
+        String uniqueName = makeUniqueQuestionnaireName(truncatedName, warnings);
+
         long questionnaireId = questionnaireSequence.incrementAndGet();
-        sql.add("INSERT INTO questionnaires (id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
-        sql.add("INSERT INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
-        sql.add("INSERT INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+        sql.add("INSERT INTO questionnaires (id, name) VALUES (" + questionnaireId + ", '" + escape(uniqueName) + "');");
+        sql.add("INSERT INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(uniqueName) + "', NULL, NULL);");
+        sql.add("INSERT INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(uniqueName) + "', NULL, NULL);");
 
         long newCompetenceCount = 0;
         long newCategoryCount = 0;
@@ -140,6 +145,27 @@ public class MetroIntegrationService {
         );
         maybeAddLookupWarning(warnings);
         return new IntegrationPreviewResponse(sql, warnings, summary);
+    }
+
+    private String makeUniqueQuestionnaireName(String name, List<String> warnings) {
+        if (lookupRepository == null) {
+            return name;
+        }
+        try {
+            if (!lookupRepository.questionnaireNameExists(name)) {
+                return name;
+            }
+            // Name exists, append short timestamp to make it unique (max 30 chars total)
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HHmm"));
+            int maxBaseLength = 30 - timestamp.length() - 3; // 3 for " ()"
+            String baseName = name.length() > maxBaseLength ? name.substring(0, maxBaseLength) : name;
+            String uniqueName = baseName + " (" + timestamp + ")";
+            warnings.add("Assessment naam '" + name + "' bestaat al, hernoemd naar '" + uniqueName + "'");
+            return uniqueName;
+        } catch (Exception ex) {
+            recordLookupError(ex);
+            return name;
+        }
     }
 
     private long resolveStartId(long fallback, String table) {
