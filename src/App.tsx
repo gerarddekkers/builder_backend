@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CompetenceRow, AssessmentFormData, Category, competenceRowToPayload } from './types';
 import { AssessmentBuildRequest, AssessmentBuildResponse, XmlPreviewResponse, TranslateRequest, TranslateResponse, CategorySearchResult, CompetenceSearchResult } from './types/api';
+import './App.css';
 
 function App() {
   const [formData, setFormData] = useState<AssessmentFormData>({
@@ -18,6 +19,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [buildResponse, setBuildResponse] = useState<AssessmentBuildResponse | null>(null);
   const [xmlPreview, setXmlPreview] = useState<XmlPreviewResponse | null>(null);
+  const [blurredFields, setBlurredFields] = useState<Set<string>>(new Set());
 
   const addCompetence = () => {
     const newCompetence: CompetenceRow = {
@@ -42,6 +44,76 @@ function App() {
     setCompetences(competences.map(comp => 
       comp.id === id ? { ...comp, [field]: value } : comp
     ));
+  };
+
+  const handleFieldBlur = (fieldKey: string) => {
+    setBlurredFields(prev => new Set(prev).add(fieldKey));
+  };
+
+  const isCompetenceRowValid = (competence: CompetenceRow) => {
+    return competence.category.trim() !== '' && competence.name.trim() !== '';
+  };
+
+  const isCompetenceRowEmpty = (competence: CompetenceRow) => {
+    return competence.name.trim() === '' && 
+           competence.nameEn.trim() === '' && 
+           competence.description.trim() === '' && 
+           competence.descriptionEn.trim() === '' && 
+           competence.category.trim() === '' && 
+           competence.categoryDescription.trim() === '' && 
+           competence.categoryDescriptionEn.trim() === '';
+  };
+
+  const isCompetenceRowInvalid = (competence: CompetenceRow) => {
+    return !isCompetenceRowEmpty(competence) && !isCompetenceRowValid(competence);
+  };
+
+  const isSaveButtonEnabled = () => {
+    // Assessment name must be non-empty
+    if (formData.assessmentName.trim() === '') {
+      return false;
+    }
+
+    // Must have at least one competence row
+    if (competences.length === 0) {
+      return false;
+    }
+
+    // Must have at least one valid competence row
+    const validRows = competences.filter(isCompetenceRowValid);
+    if (validRows.length === 0) {
+      return false;
+    }
+
+    // Must have NO invalid rows (partially filled)
+    const invalidRows = competences.filter(isCompetenceRowInvalid);
+    if (invalidRows.length > 0) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const getFieldClassName = (fieldKey: string, isRequired: boolean = false) => {
+    if (!isRequired || !blurredFields.has(fieldKey)) {
+      return '';
+    }
+    
+    if (fieldKey === 'assessmentName') {
+      return formData.assessmentName.trim() === '' ? 'field-invalid' : '';
+    }
+    
+    return '';
+  };
+
+  const getCompetenceFieldClassName = (competence: CompetenceRow, field: 'name' | 'category') => {
+    const fieldKey = `${competence.id}-${field}`;
+    if (!blurredFields.has(fieldKey)) {
+      return '';
+    }
+    
+    const value = competence[field].trim();
+    return value === '' ? 'field-invalid' : '';
   };
 
   const handleFormChange = (field: keyof AssessmentFormData, value: string) => {
@@ -168,6 +240,8 @@ function App() {
             type="text"
             value={formData.assessmentName}
             onChange={(e) => handleFormChange('assessmentName', e.target.value)}
+            onBlur={() => handleFieldBlur('assessmentName')}
+            className={getFieldClassName('assessmentName', true)}
           />
         </div>
         <div className="form-group">
@@ -220,6 +294,8 @@ function App() {
                 placeholder="Name (NL)"
                 value={competence.name}
                 onChange={(e) => updateCompetence(competence.id, 'name', e.target.value)}
+                onBlur={() => handleFieldBlur(`${competence.id}-name`)}
+                className={getCompetenceFieldClassName(competence, 'name')}
               />
               <input
                 type="text"
@@ -244,6 +320,8 @@ function App() {
                 placeholder="Category"
                 value={competence.category}
                 onChange={(e) => updateCompetence(competence.id, 'category', e.target.value)}
+                onBlur={() => handleFieldBlur(`${competence.id}-category`)}
+                className={getCompetenceFieldClassName(competence, 'category')}
               />
               <input
                 type="text"
@@ -264,9 +342,17 @@ function App() {
       </div>
 
       <div className="actions-section">
-        <button onClick={buildAssessment} disabled={isLoading}>
-          {isLoading ? 'Building...' : 'Build Assessment'}
+        <button 
+          onClick={buildAssessment} 
+          disabled={isLoading || !isSaveButtonEnabled()}
+        >
+          {isLoading ? 'Building...' : 'Opslaan'}
         </button>
+        {!isSaveButtonEnabled() && (
+          <div className="helper-text">
+            Vul minimaal een naam en één volledige competentie in
+          </div>
+        )}
         <button onClick={previewXml} disabled={isLoading}>
           {isLoading ? 'Generating...' : 'Preview XML'}
         </button>
