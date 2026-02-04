@@ -4,47 +4,28 @@ import com.mentesme.builder.model.*;
 import com.mentesme.builder.service.AiTranslationService;
 import com.mentesme.builder.service.MetroIntegrationService;
 import com.mentesme.builder.service.MetroLookupRepository;
-import com.mentesme.builder.service.XmlGenerationService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(
-        origins = {"http://localhost:5173", "http://localhost:5174"},
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS},
-        allowedHeaders = "*"
-)
+@CrossOrigin(origins = {"http://localhost:5173", "https://builder.mentes.me"})
 public class BuilderController {
 
-    private final AtomicLong idSequence = new AtomicLong(1000);
+    private final MetroLookupRepository metroLookup;
     private final MetroIntegrationService integrationService;
-    private final MetroLookupRepository lookupRepository;
-    private final XmlGenerationService xmlGenerationService;
     private final AiTranslationService translationService;
 
-    private final List<CompetenceSummary> existingCompetences = List.of(
-            new CompetenceSummary("Leiderschap", "Leadership", "Management", "People"),
-            new CompetenceSummary("Samenwerken", "Collaboration", "Team", "Soft skills"),
-            new CompetenceSummary("Analyse", "Analysis", "Data", "Technical")
-    );
-
     public BuilderController(
+            MetroLookupRepository metroLookup,
             MetroIntegrationService integrationService,
-            ObjectProvider<MetroLookupRepository> lookupRepositoryProvider,
-            XmlGenerationService xmlGenerationService,
             AiTranslationService translationService
     ) {
+        this.metroLookup = metroLookup;
         this.integrationService = integrationService;
-        this.lookupRepository = lookupRepositoryProvider.getIfAvailable();
-        this.xmlGenerationService = xmlGenerationService;
         this.translationService = translationService;
     }
 
@@ -53,79 +34,68 @@ public class BuilderController {
         return "ok";
     }
 
-    // ---------- COMPETENCES ----------
-    @GetMapping("/competences")
-    public List<?> findCompetences(@RequestParam(value = "query", required = false) String query) {
-        if (query == null || query.isBlank()) {
-            return existingCompetences;
-        }
+    // ─────────────────────────────────────────────────────────────
+    // Category search (database)
+    // ─────────────────────────────────────────────────────────────
 
-        if (lookupRepository != null) {
-            try {
-                return lookupRepository.searchCompetences(query);
-            } catch (Exception ignored) {}
-        }
-
-        String lowered = query.toLowerCase(Locale.ROOT);
-        return existingCompetences.stream()
-                .filter(c ->
-                        c.nameNl().toLowerCase().contains(lowered) ||
-                        c.nameEn().toLowerCase().contains(lowered))
-                .collect(Collectors.toList());
-    }
-
-    // ---------- CATEGORIES (FIXED: NO SQL REQUIRED) ----------
-    @GetMapping("/categories")
-    public List<CategorySearchResult> findCategories(
-            @RequestParam(value = "query", required = false) String query
-    ) {
-        if (query == null || query.isBlank()) {
+    @GetMapping("/categories/search")
+    public List<CategorySearchResult> searchCategories(@RequestParam(value = "q", defaultValue = "") String query) {
+        if (query.isBlank()) {
             return List.of();
         }
-
-        // TEMP fallback zodat lookup ALTIJD werkt
-        return List.of(
-                new CategorySearchResult(1L, "Persoonlijk", "Personal"),
-                new CategorySearchResult(2L, "Leiderschap", "Leadership"),
-                new CategorySearchResult(3L, "Samenwerken", "Collaboration"),
-                new CategorySearchResult(4L, "Analyse", "Analysis")
-        ).stream()
-         .filter(c ->
-                 c.nameNl().toLowerCase().contains(query.toLowerCase()) ||
-                 c.nameEn().toLowerCase().contains(query.toLowerCase()))
-         .toList();
+        return metroLookup.searchCategories(query);
     }
 
-    // ---------- BUILD ----------
+    // ─────────────────────────────────────────────────────────────
+    // Competence search (database)
+    // ─────────────────────────────────────────────────────────────
+
+    @GetMapping("/competences/search")
+    public List<CompetenceSearchResult> searchCompetences(@RequestParam(value = "q", defaultValue = "") String query) {
+        if (query.isBlank()) {
+            return List.of();
+        }
+        return metroLookup.searchCompetences(query);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // AI Translation (NL → EN)
+    // ─────────────────────────────────────────────────────────────
+
+    @PostMapping("/translate")
+    public TranslateResponse translate(@RequestBody TranslateRequest request) {
+        String source = request.sourceLanguage() != null ? request.sourceLanguage() : "nl";
+        String target = request.targetLanguage() != null ? request.targetLanguage() : "en";
+
+        AiTranslationService.TranslationResult result = translationService.translate(source, target, request.texts());
+        return new TranslateResponse(result.translations(), result.warning());
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Assessment build
+    // ─────────────────────────────────────────────────────────────
+
     @PostMapping("/assessments/build")
     @ResponseStatus(HttpStatus.CREATED)
     public AssessmentBuildResponse buildAssessment(@Valid @RequestBody AssessmentBuildRequest request) {
-        long id = idSequence.incrementAndGet();
-        return new AssessmentBuildResponse(id, "Assessment opgeslagen.");
-    }
+        // Generate SQL statements for the assessment
+        IntegrationPreviewResponse preview = integrationService.generatePreview(request);
 
-    // ---------- XML ----------
-    @PostMapping("/xml/preview")
-    public XmlPreviewResponse previewXml(@Valid @RequestBody AssessmentBuildRequest request) {
-        List<String> warnings = new java.util.ArrayList<>();
-        return new XmlPreviewResponse(
-                xmlGenerationService.generateQuestionnaireXml(request, "nl", warnings),
-                xmlGenerationService.generateQuestionnaireXml(request, "en", warnings),
-                xmlGenerationService.generateReportXml(request, "nl", warnings),
-                xmlGenerationService.generateReportXml(request, "en", warnings),
-                warnings
-        );
-    }
+        // Execute the SQL statements to persist to Metro database
+        metroLookup.executeSqlStatements(preview.sqlStatements());
 
-    // ---------- TRANSLATE ----------
-    @PostMapping("/translate")
-    public TranslateResponse translate(@RequestBody TranslateRequest request) {
-        var result = translationService.translate(
-                request.sourceLanguage() == null ? "nl" : request.sourceLanguage(),
-                request.targetLanguage() == null ? "en" : request.targetLanguage(),
-                request.texts()
+        // Build response message with summary
+        String message = String.format(
+            "Assessment opgeslagen in Metro database (ID: %d). Nieuwe competenties: %d, nieuwe categorieën: %d.",
+            preview.summary().questionnaireId(),
+            preview.summary().newCompetences(),
+            preview.summary().newCategories()
         );
-        return new TranslateResponse(result.translations(), result.warning());
+
+        if (!preview.warnings().isEmpty()) {
+            message += " Waarschuwingen: " + String.join("; ", preview.warnings());
+        }
+
+        return new AssessmentBuildResponse(preview.summary().questionnaireId(), message);
     }
 }
-

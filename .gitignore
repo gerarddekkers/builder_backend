@@ -3,3 +3,4 @@ frontend/dist/
 backend/target/
 .DS_Store
 .env
+.aider*

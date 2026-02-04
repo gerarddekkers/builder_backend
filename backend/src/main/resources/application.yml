@@ -1,28 +1,20 @@
+server:
+  port: 8080
+
 spring:
   jackson:
     serialization:
       indent_output: true
 
-logging:
-  level:
-    com.zaxxer.hikari: DEBUG
-    org.springframework.jdbc: DEBUG
-
 builder:
-  integration:
-    competenceStartId: 2000
-    categoryStartId: 300
-    goalStartId: 300
-    questionnaireStartId: 200
-
-  ai:
-    apiKey: JOUW_API_KEY_HIER
-
-
   metro:
     enabled: true
     datasource:
-      url: ${BUILDER_METRO_DATASOURCE_URL}
-      username: ${BUILDER_METRO_DATASOURCE_USERNAME}
-      password: ${BUILDER_METRO_DATASOURCE_PASSWORD}
+      url: jdbc:mysql://test-metro-db.cyi4arp1bouk.eu-west-1.rds.amazonaws.com:3306/metro?useSSL=true&requireSSL=true
+      username: mastermetro
+      password: DOQmUyfeuOQp3TIjr4NJ
       driver-class-name: com.mysql.cj.jdbc.Driver
+  ai:
+    apiUrl: https://api.openai.com/v1/chat/completions
+    apiKey: ${OPENAI_API_KEY:}
+    model: gpt-4o-mini

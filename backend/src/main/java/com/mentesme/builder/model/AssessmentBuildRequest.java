@@ -6,16 +6,20 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
-import java.util.List;
-
 public record AssessmentBuildRequest(
+        // Assessment name
         @NotBlank String assessmentName,
-        String assessmentDescription,
-        String assessmentInstruction,
         String assessmentNameEn,
+
+        // Assessment description
+        String assessmentDescription,
         String assessmentDescriptionEn,
+
+        // Assessment instruction
+        String assessmentInstruction,
         String assessmentInstructionEn,
-        @NotEmpty @Valid List<CompetenceInput> competences,
-        List<Long> groupIds
+
+        // Competences
+        @NotEmpty @Valid List<CompetenceInput> competences
 ) {
 }

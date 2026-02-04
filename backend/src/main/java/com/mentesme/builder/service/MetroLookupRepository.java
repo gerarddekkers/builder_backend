@@ -120,4 +120,16 @@ public class MetroLookupRepository {
         return result == null ? 0L : result;
     }
 
+    /**
+     * Execute a list of SQL statements.
+     * Used by the build endpoint to persist assessments to Metro database.
+     */
+    public void executeSqlStatements(List<String> sqlStatements) {
+        for (String sql : sqlStatements) {
+            if (sql != null && !sql.isBlank()) {
+                jdbcTemplate.execute(sql);
+            }
+        }
+    }
+
 }
