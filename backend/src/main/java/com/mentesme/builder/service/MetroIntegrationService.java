@@ -21,6 +21,7 @@ public class MetroIntegrationService {
     private final AtomicLong categorySequence;
     private final AtomicLong goalSequence;
     private final AtomicLong questionnaireSequence;
+    private final AtomicLong itemSequence;
     private final MetroLookupRepository lookupRepository;
     private volatile String lookupError;
 
@@ -29,18 +30,21 @@ public class MetroIntegrationService {
             @Value("${builder.integration.competenceStartId:2000}") long competenceStartId,
             @Value("${builder.integration.categoryStartId:300}") long categoryStartId,
             @Value("${builder.integration.goalStartId:300}") long goalStartId,
-            @Value("${builder.integration.questionnaireStartId:200}") long questionnaireStartId
+            @Value("${builder.integration.questionnaireStartId:200}") long questionnaireStartId,
+            @Value("${builder.integration.itemStartId:5000}") long itemStartId
     ) {
         this.lookupRepository = lookupRepositoryProvider.getIfAvailable();
         long competenceSeed = resolveStartId(competenceStartId, "competences");
         long categorySeed = resolveStartId(categoryStartId, "categories");
         long goalSeed = resolveStartId(goalStartId, "goals");
         long questionnaireSeed = resolveStartId(questionnaireStartId, "questionnaires");
+        long itemSeed = resolveStartId(itemStartId, "items");
 
         this.competenceSequence = new AtomicLong(competenceSeed);
         this.categorySequence = new AtomicLong(categorySeed);
         this.goalSequence = new AtomicLong(goalSeed);
         this.questionnaireSequence = new AtomicLong(questionnaireSeed);
+        this.itemSequence = new AtomicLong(itemSeed);
     }
 
     public IntegrationPreviewResponse generatePreview(AssessmentBuildRequest request) {
@@ -54,13 +58,15 @@ public class MetroIntegrationService {
         String truncatedName = truncate(assessmentName, 30, warnings);
 
         long questionnaireId = questionnaireSequence.incrementAndGet();
-        sql.add("INSERT INTO questionnaires (id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
-        sql.add("INSERT INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
-        sql.add("INSERT INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+        sql.add("INSERT IGNORE INTO questionnaires (id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
+        sql.add("INSERT IGNORE INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
+        sql.add("INSERT IGNORE INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
 
         long newCompetenceCount = 0;
         long newCategoryCount = 0;
         long newGoalCount = 0;
+        long newItemCount = 0;
+        int itemOrder = 0;
 
         for (CompetenceInput input : request.competences()) {
             String categoryName = safeTrim(input.category());
@@ -72,9 +78,9 @@ public class MetroIntegrationService {
                 categoryId = lookupExistingCategoryId(categoryName);
                 if (categoryId == null) {
                     categoryId = categorySequence.incrementAndGet();
-                    sql.add("INSERT INTO categories (id, name) VALUES (" + categoryId + ", '" + escape(categoryName) + "');");
-                    sql.add("INSERT INTO category_translations (categoryId, language, name) VALUES (" + categoryId + ", 'nl', '" + escape(categoryName) + "');");
-                    sql.add("INSERT INTO category_translations (categoryId, language, name) VALUES (" + categoryId + ", 'en', '" + escape(categoryName) + "');");
+                    sql.add("INSERT IGNORE INTO categories (id, name) VALUES (" + categoryId + ", '" + escape(categoryName) + "');");
+                    sql.add("INSERT IGNORE INTO category_translations (categoryId, language, name) VALUES (" + categoryId + ", 'nl', '" + escape(categoryName) + "');");
+                    sql.add("INSERT IGNORE INTO category_translations (categoryId, language, name) VALUES (" + categoryId + ", 'en', '" + escape(categoryName) + "');");
                     newCategoryCount++;
                 }
                 categoryIds.put(categoryKey, categoryId);
@@ -88,9 +94,9 @@ public class MetroIntegrationService {
                     goalId = lookupExistingGoalId(subcategoryName);
                     if (goalId == null) {
                         goalId = goalSequence.incrementAndGet();
-                        sql.add("INSERT INTO goals (id, name) VALUES (" + goalId + ", '" + escape(subcategoryName) + "');");
-                        sql.add("INSERT INTO goal_translations (goalId, language, name) VALUES (" + goalId + ", 'nl', '" + escape(subcategoryName) + "');");
-                        sql.add("INSERT INTO goal_translations (goalId, language, name) VALUES (" + goalId + ", 'en', '" + escape(subcategoryName) + "');");
+                        sql.add("INSERT IGNORE INTO goals (id, name) VALUES (" + goalId + ", '" + escape(subcategoryName) + "');");
+                        sql.add("INSERT IGNORE INTO goal_translations (goalId, language, name) VALUES (" + goalId + ", 'nl', '" + escape(subcategoryName) + "');");
+                        sql.add("INSERT IGNORE INTO goal_translations (goalId, language, name) VALUES (" + goalId + ", 'en', '" + escape(subcategoryName) + "');");
                         newGoalCount++;
                     }
                     goalIds.put(goalKey, goalId);
@@ -109,14 +115,14 @@ public class MetroIntegrationService {
                 String nameEn = safeTrim(input.nameEn());
                 String descriptionEn = safeTrim(input.descriptionEn());
 
-                sql.add("INSERT INTO competences (id, name, description, defaultMinPassScore, defaultMinMentorScore) VALUES (" +
+                sql.add("INSERT IGNORE INTO competences (id, name, description, defaultMinPassScore, defaultMinMentorScore) VALUES (" +
                         competenceId + ", '" + escape(competenceName) + "', " + nullOrQuoted(description) + ", NULL, NULL);");
 
-                sql.add("INSERT INTO competence_translations (competenceId, language, name, description) VALUES (" + competenceId + ", 'nl', '" + escape(competenceName) + "', " + nullOrQuoted(description) + ");");
+                sql.add("INSERT IGNORE INTO competence_translations (competenceId, language, name, description) VALUES (" + competenceId + ", 'nl', '" + escape(competenceName) + "', " + nullOrQuoted(description) + ");");
 
                 String effectiveEnName = nameEn.isBlank() ? competenceName : nameEn;
                 String effectiveEnDescription = descriptionEn.isBlank() ? description : descriptionEn;
-                sql.add("INSERT INTO competence_translations (competenceId, language, name, description) VALUES (" + competenceId + ", 'en', '" + escape(effectiveEnName) + "', " + nullOrQuoted(effectiveEnDescription) + ");");
+                sql.add("INSERT IGNORE INTO competence_translations (competenceId, language, name, description) VALUES (" + competenceId + ", 'en', '" + escape(effectiveEnName) + "', " + nullOrQuoted(effectiveEnDescription) + ");");
                 newCompetenceCount++;
             }
 
@@ -130,13 +136,49 @@ public class MetroIntegrationService {
             if (goalId != null) {
                 sql.add("INSERT IGNORE INTO goal_competences (goalId, competenceId) VALUES (" + goalId + ", " + competenceId + ");");
             }
+
+            // Create item for this competence (Niet-vraag / Wel-vraag)
+            String questionLeft = safeTrim(input.questionLeft());
+            String questionRight = safeTrim(input.questionRight());
+            String questionLeftEn = safeTrim(input.questionLeftEn());
+            String questionRightEn = safeTrim(input.questionRightEn());
+
+            if (!questionLeft.isBlank() || !questionRight.isBlank()) {
+                long itemId = itemSequence.incrementAndGet();
+                String itemName = safeTrim(input.name()) + "_item";
+
+                // Create item
+                sql.add("INSERT IGNORE INTO items (id, name, invertOrder) VALUES (" + itemId + ", '" + escape(itemName) + "', 0);");
+
+                // Create item translations (leftText = Niet-vraag, rightText = Wel-vraag)
+                String effectiveLeftNl = questionLeft.isBlank() ? questionRight : questionLeft;
+                String effectiveRightNl = questionRight.isBlank() ? questionLeft : questionRight;
+                String effectiveLeftEn = questionLeftEn.isBlank() ? effectiveLeftNl : questionLeftEn;
+                String effectiveRightEn = questionRightEn.isBlank() ? effectiveRightNl : questionRightEn;
+
+                sql.add("INSERT IGNORE INTO item_translations (itemId, language, leftText, rightText) VALUES (" +
+                        itemId + ", 'nl', '" + escape(effectiveLeftNl) + "', '" + escape(effectiveRightNl) + "');");
+                sql.add("INSERT IGNORE INTO item_translations (itemId, language, leftText, rightText) VALUES (" +
+                        itemId + ", 'en', '" + escape(effectiveLeftEn) + "', '" + escape(effectiveRightEn) + "');");
+
+                // Link item to questionnaire
+                itemOrder++;
+                sql.add("INSERT IGNORE INTO questionnaire_items (questionnaireId, itemId, `order`) VALUES (" +
+                        questionnaireId + ", " + itemId + ", " + itemOrder + ");");
+
+                // Link item to competence
+                sql.add("INSERT IGNORE INTO competence_items (competenceId, itemId) VALUES (" + competenceId + ", " + itemId + ");");
+
+                newItemCount++;
+            }
         }
 
         IntegrationPreviewResponse.Summary summary = new IntegrationPreviewResponse.Summary(
                 newCompetenceCount,
                 newCategoryCount,
                 newGoalCount,
-                questionnaireId
+                questionnaireId,
+                newItemCount
         );
         maybeAddLookupWarning(warnings);
         return new IntegrationPreviewResponse(sql, warnings, summary);

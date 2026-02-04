@@ -11,7 +11,8 @@ public record IntegrationPreviewResponse(
             long newCompetences,
             long newCategories,
             long newGoals,
-            long questionnaireId
+            long questionnaireId,
+            long newItems
     ) {
     }
 }

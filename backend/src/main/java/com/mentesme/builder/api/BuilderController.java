@@ -1,7 +1,7 @@
 package com.mentesme.builder.api;
 
 import com.mentesme.builder.model.*;
-import com.mentesme.builder.service.AiTranslationService;
+import com.mentesme.builder.service.GoogleTranslationService;
 import com.mentesme.builder.service.MetroIntegrationService;
 import com.mentesme.builder.service.MetroLookupRepository;
 import jakarta.validation.Valid;
@@ -17,12 +17,12 @@ public class BuilderController {
 
     private final MetroLookupRepository metroLookup;
     private final MetroIntegrationService integrationService;
-    private final AiTranslationService translationService;
+    private final GoogleTranslationService translationService;
 
     public BuilderController(
             MetroLookupRepository metroLookup,
             MetroIntegrationService integrationService,
-            AiTranslationService translationService
+            GoogleTranslationService translationService
     ) {
         this.metroLookup = metroLookup;
         this.integrationService = integrationService;
@@ -32,6 +32,20 @@ public class BuilderController {
     @GetMapping("/health")
     public String health() {
         return "ok";
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Assessment name check (database)
+    // ─────────────────────────────────────────────────────────────
+
+    @GetMapping("/questionnaires/check")
+    public QuestionnaireCheckResponse checkQuestionnaireName(@RequestParam(value = "name", defaultValue = "") String name) {
+        if (name.isBlank()) {
+            return new QuestionnaireCheckResponse(false, null);
+        }
+        return metroLookup.findQuestionnaireIdByName(name)
+                .map(id -> new QuestionnaireCheckResponse(true, id))
+                .orElse(new QuestionnaireCheckResponse(false, null));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -59,7 +73,7 @@ public class BuilderController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // AI Translation (NL → EN)
+    // Google Translation (NL → EN)
     // ─────────────────────────────────────────────────────────────
 
     @PostMapping("/translate")
@@ -67,7 +81,7 @@ public class BuilderController {
         String source = request.sourceLanguage() != null ? request.sourceLanguage() : "nl";
         String target = request.targetLanguage() != null ? request.targetLanguage() : "en";
 
-        AiTranslationService.TranslationResult result = translationService.translate(source, target, request.texts());
+        GoogleTranslationService.TranslationResult result = translationService.translate(source, target, request.texts());
         return new TranslateResponse(result.translations(), result.warning());
     }
 
@@ -86,10 +100,11 @@ public class BuilderController {
 
         // Build response message with summary
         String message = String.format(
-            "Assessment opgeslagen in Metro database (ID: %d). Nieuwe competenties: %d, nieuwe categorieën: %d.",
+            "Assessment opgeslagen in Metro database (ID: %d). Nieuwe competenties: %d, nieuwe categorieën: %d, nieuwe items: %d.",
             preview.summary().questionnaireId(),
             preview.summary().newCompetences(),
-            preview.summary().newCategories()
+            preview.summary().newCategories(),
+            preview.summary().newItems()
         );
 
         if (!preview.warnings().isEmpty()) {

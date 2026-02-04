@@ -121,6 +121,27 @@ public class MetroLookupRepository {
     }
 
     /**
+     * Check if a questionnaire with the given name already exists.
+     * @return Optional containing the questionnaire ID if found, empty otherwise.
+     */
+    public Optional<Long> findQuestionnaireIdByName(String name) {
+        if (name == null || name.isBlank()) {
+            return Optional.empty();
+        }
+        String sql = "SELECT id FROM questionnaires WHERE LOWER(name) = LOWER(?) LIMIT 1";
+        Optional<Long> direct = jdbcTemplate.query(sql, rs -> rs.next() ? Optional.of(rs.getLong(1)) : Optional.empty(), name.trim());
+        if (direct == null) {
+            direct = Optional.empty();
+        }
+        if (direct.isPresent()) {
+            return direct;
+        }
+        // Also check questionnaire_translations
+        String translatedSql = "SELECT questionnaireId FROM questionnaire_translations WHERE LOWER(name) = LOWER(?) LIMIT 1";
+        return jdbcTemplate.query(translatedSql, rs -> rs.next() ? Optional.of(rs.getLong(1)) : Optional.empty(), name.trim());
+    }
+
+    /**
      * Execute a list of SQL statements.
      * Used by the build endpoint to persist assessments to Metro database.
      */

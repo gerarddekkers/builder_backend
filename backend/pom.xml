@@ -14,6 +14,7 @@
   <groupId>com.mentesme</groupId>
   <artifactId>assessment-builder-backend</artifactId>
   <version>0.1.0</version>
+  <packaging>war</packaging>
   <name>assessment-builder-backend</name>
   <description>Assessment Builder backend</description>
 
@@ -35,13 +36,23 @@
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.mysql</groupId>
       <artifactId>mysql-connector-j</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
+    <finalName>ROOT</finalName>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
