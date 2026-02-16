@@ -2,9 +2,12 @@ package com.mentesme.builder.api;
 
 import com.mentesme.builder.model.*;
 import com.mentesme.builder.service.GoogleTranslationService;
-import com.mentesme.builder.service.MetroIntegrationService;
 import com.mentesme.builder.service.MetroLookupRepository;
+import com.mentesme.builder.service.QuestionnairePublishService;
+import com.mentesme.builder.service.XmlGenerationService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,18 +18,23 @@ import java.util.List;
 @CrossOrigin(origins = {"http://localhost:5173", "https://builder.mentes.me"})
 public class BuilderController {
 
+    private static final Logger log = LoggerFactory.getLogger(BuilderController.class);
+
     private final MetroLookupRepository metroLookup;
-    private final MetroIntegrationService integrationService;
+    private final QuestionnairePublishService publishService;
     private final GoogleTranslationService translationService;
+    private final XmlGenerationService xmlGenerationService;
 
     public BuilderController(
             MetroLookupRepository metroLookup,
-            MetroIntegrationService integrationService,
-            GoogleTranslationService translationService
+            QuestionnairePublishService publishService,
+            GoogleTranslationService translationService,
+            XmlGenerationService xmlGenerationService
     ) {
         this.metroLookup = metroLookup;
-        this.integrationService = integrationService;
+        this.publishService = publishService;
         this.translationService = translationService;
+        this.xmlGenerationService = xmlGenerationService;
     }
 
     @GetMapping("/health")
@@ -86,31 +94,36 @@ public class BuilderController {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Assessment build
+    // XML Preview (questionnaire + report)
     // ─────────────────────────────────────────────────────────────
 
+    @PostMapping("/assessments/xml-preview")
+    public XmlPreviewResponse xmlPreview(@Valid @RequestBody AssessmentBuildRequest request) {
+        java.util.ArrayList<String> warnings = new java.util.ArrayList<>();
+
+        String questionnaireNl = xmlGenerationService.generateQuestionnaireXml(request, "nl", warnings);
+        String questionnaireEn = xmlGenerationService.generateQuestionnaireXml(request, "en", warnings);
+        String reportNl = xmlGenerationService.generateReportXml(request, "nl", warnings);
+        String reportEn = xmlGenerationService.generateReportXml(request, "en", warnings);
+
+        return new XmlPreviewResponse(questionnaireNl, questionnaireEn, reportNl, reportEn, warnings);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Assessment build (DEPRECATED)
+    // ─────────────────────────────────────────────────────────────
+
+    // TODO: Remove this endpoint after frontend migration is confirmed stable.
+    @Deprecated
     @PostMapping("/assessments/build")
     @ResponseStatus(HttpStatus.CREATED)
     public AssessmentBuildResponse buildAssessment(@Valid @RequestBody AssessmentBuildRequest request) {
-        // Generate SQL statements for the assessment
-        IntegrationPreviewResponse preview = integrationService.generatePreview(request);
-
-        // Execute the SQL statements to persist to Metro database
-        metroLookup.executeSqlStatements(preview.sqlStatements());
-
-        // Build response message with summary
+        log.warn("DEPRECATED endpoint /api/assessments/build used. Please migrate to /api/questionnaires/publish.");
+        PublishResult result = publishService.publish(request);
         String message = String.format(
-            "Assessment opgeslagen in Metro database (ID: %d). Nieuwe competenties: %d, nieuwe categorieën: %d, nieuwe items: %d.",
-            preview.summary().questionnaireId(),
-            preview.summary().newCompetences(),
-            preview.summary().newCategories(),
-            preview.summary().newItems()
+            "Assessment opgeslagen in Metro database (ID: %d).",
+            result.questionnaireId()
         );
-
-        if (!preview.warnings().isEmpty()) {
-            message += " Waarschuwingen: " + String.join("; ", preview.warnings());
-        }
-
-        return new AssessmentBuildResponse(preview.summary().questionnaireId(), message);
+        return new AssessmentBuildResponse(result.questionnaireId(), message);
     }
 }
