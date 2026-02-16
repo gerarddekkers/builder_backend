@@ -104,10 +104,18 @@ public class MetroIntegrationService {
         String assessmentName = safeTrim(request.assessmentName());
         String truncatedName = truncate(assessmentName, 30, warnings);
 
-        long questionnaireId = questionnaireSequence.incrementAndGet();
-        sql.add("INSERT INTO questionnaires(id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
-        sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
-        sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+        // Reuse existing questionnaire if name already exists, otherwise create new
+        Long existingQuestionnaireId = lookupExistingQuestionnaireId(truncatedName);
+        long questionnaireId;
+        if (existingQuestionnaireId != null) {
+            questionnaireId = existingQuestionnaireId;
+            warnings.add("Questionnaire '" + truncatedName + "' bestaat al (ID: " + questionnaireId + "). Competenties en items worden toegevoegd.");
+        } else {
+            questionnaireId = questionnaireSequence.incrementAndGet();
+            sql.add("INSERT INTO questionnaires(id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
+            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
+            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+        }
 
         long newCompetenceCount = 0;
         long newCategoryCount = 0;
@@ -242,6 +250,19 @@ public class MetroIntegrationService {
         } catch (Exception ex) {
             recordLookupError(ex);
             return fallback;
+        }
+    }
+
+    private Long lookupExistingQuestionnaireId(String questionnaireName) {
+        MetroLookupRepository repo = getLookupRepository();
+        if (repo == null) {
+            return null;
+        }
+        try {
+            return repo.findQuestionnaireIdByName(questionnaireName).orElse(null);
+        } catch (Exception ex) {
+            recordLookupError(ex);
+            return null;
         }
     }
 
