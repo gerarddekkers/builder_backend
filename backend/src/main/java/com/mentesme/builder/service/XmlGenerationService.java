@@ -14,7 +14,6 @@ public class XmlGenerationService {
 
     public String generateQuestionnaireXml(AssessmentBuildRequest request, String language, List<String> warnings) {
         String title = select(language, request.assessmentName(), request.assessmentNameEn());
-        String description = select(language, request.assessmentDescription(), request.assessmentDescriptionEn());
         String instruction = select(language, request.assessmentInstruction(), request.assessmentInstructionEn());
 
         LinkedHashMap<String, CategoryBucket> categories = buildCategoryBuckets(request.competences());
@@ -23,14 +22,27 @@ public class XmlGenerationService {
         sb.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         sb.append("<questionnaire");
         sb.append(attribute("title", title));
-        sb.append(attribute("instruction", instruction));
-        sb.append(attribute("description", description));
+        sb.append("\n\tinstruction=\"\"");
+        sb.append("\n\tvaluators=\"7\"");
+        sb.append("\n\tdescription=\"\"");
         sb.append(">\n");
 
+        boolean firstSection = true;
         int categoryIndex = 1;
         for (CategoryBucket bucket : categories.values()) {
             String sectionTitle = bucket.name;
-            String sectionInstruction = select(language, bucket.descriptionNl, bucket.descriptionEn);
+            // Each section gets its category description as instruction.
+            // Fallback: first section gets the assessment instruction if no category description.
+            String categoryDesc = select(language, bucket.descriptionNl, bucket.descriptionEn);
+            String sectionInstruction;
+            if (!categoryDesc.isBlank()) {
+                sectionInstruction = categoryDesc;
+            } else if (firstSection) {
+                sectionInstruction = instruction;
+            } else {
+                sectionInstruction = "";
+            }
+            firstSection = false;
             sb.append("\t<section");
             sb.append(attribute("title", sectionTitle));
             sb.append(attribute("instruction", sectionInstruction));
@@ -67,13 +79,12 @@ public class XmlGenerationService {
         String introText = select(language, request.assessmentDescription(), request.assessmentDescriptionEn());
 
         LinkedHashMap<String, CategoryBucket> categories = buildCategoryBuckets(request.competences());
-        List<QuestionEntry> questions = buildQuestionEntries(categories, language);
         LinkedHashMap<String, ReportSection> reportSections = buildReportSections(request.competences(), categories, language);
 
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         sb.append("<report");
-        sb.append(attribute("title", "Rapportage over " + assessmentName));
+        sb.append(attribute("title", assessmentName));
         sb.append(">\n");
 
         sb.append("\t<section").append(attribute("title", title(language, "Inleiding", "Introduction"))).append(">\n");
@@ -82,45 +93,48 @@ public class XmlGenerationService {
         }
         sb.append("\t</section>\n");
 
-        String questionsAll = joinQuestions(questions);
-        String labelsAll = joinLabels(questions);
+        // Build category-level entries for overview graphs (e.g., "1.|2.|3." with category names)
+        List<QuestionEntry> categoryEntries = buildCategoryEntries(categories, language);
+        String categoryQuestions = joinQuestions(categoryEntries);
+        String categoryLabels = joinLabels(categoryEntries);
 
         sb.append("\t<section").append(attribute("title", title(language, "Overzicht van de scores", "Score overview"))).append(">\n");
         sb.append("\t\t<graph").append(attribute("type", "bar"))
-                .append(attribute("questions", questionsAll))
-                .append(attribute("labels", labelsAll)).append(" />\n");
+                .append(attribute("questions", categoryQuestions))
+                .append(attribute("labels", categoryLabels)).append(" />\n");
         sb.append("\t\t<graph").append(attribute("type", "spider"))
                 .append(attribute("title", title(language, "Alle gebieden op een rijtje", "All areas at a glance")))
-                .append(attribute("questions", questionsAll))
+                .append(attribute("questions", categoryQuestions))
                 .append(attribute("min", "6"))
                 .append(attribute("max", "8"))
-                .append(attribute("labels", labelsAll)).append(" />\n");
+                .append(attribute("labels", categoryLabels)).append(" />\n");
         sb.append("\t\t<graph").append(attribute("type", "bar"))
                 .append(attribute("title", title(language, "Mijn score versus wat anderen vinden", "My score versus others")))
-                .append(attribute("questions", questionsAll))
-                .append(attribute("labels", labelsAll))
+                .append(attribute("questions", categoryQuestions))
+                .append(attribute("labels", categoryLabels))
                 .append(attribute("groupBy", "0"))
                 .append(attribute("groups", "1|2|3|4"))
                 .append(attribute("groupLabels", groupLabels(language))).append(" />\n");
         sb.append("\t\t<graph").append(attribute("type", "table"))
                 .append(attribute("title", title(language, "Mijn score versus wat anderen vinden", "My score versus others")))
-                .append(attribute("questions", questionsAll))
-                .append(attribute("labels", labelsAll))
+                .append(attribute("questions", categoryQuestions))
+                .append(attribute("labels", categoryLabels))
                 .append(attribute("groupBy", "0"))
                 .append(attribute("groups", "1|2|3|4"))
                 .append(attribute("groupLabels", groupLabels(language))).append(" />\n");
         sb.append("\t</section>\n");
 
         for (ReportSection section : reportSections.values()) {
-            sb.append("\t<section").append(attribute("title", section.title)).append(">\n");
+            sb.append("\t<section").append(attribute("title", section.title.toUpperCase(Locale.ROOT))).append(">\n");
             if (!section.description.isBlank()) {
                 sb.append("\t\t<p>").append(escapeText(section.description)).append("</p>\n");
             }
             if (!section.questions.isEmpty()) {
                 sb.append("\t\t<list>\n");
                 for (QuestionEntry entry : section.questions) {
+                    String displayId = entry.id.endsWith(".") ? entry.id.substring(0, entry.id.length() - 1) : entry.id;
                     sb.append("\t\t\t<p>")
-                            .append(escapeText(entry.id + " " + entry.label))
+                            .append(escapeText(displayId + " " + entry.label))
                             .append("</p>\n");
                 }
                 sb.append("\t\t</list>\n");
@@ -161,6 +175,18 @@ public class XmlGenerationService {
         return categories;
     }
 
+    private List<QuestionEntry> buildCategoryEntries(LinkedHashMap<String, CategoryBucket> categories, String language) {
+        List<QuestionEntry> entries = new ArrayList<>();
+        int categoryIndex = 1;
+        for (CategoryBucket bucket : categories.values()) {
+            String id = categoryIndex + ".";
+            String label = bucket.name;
+            entries.add(new QuestionEntry(id, label));
+            categoryIndex++;
+        }
+        return entries;
+    }
+
     private List<QuestionEntry> buildQuestionEntries(LinkedHashMap<String, CategoryBucket> categories, String language) {
         List<QuestionEntry> entries = new ArrayList<>();
         int categoryIndex = 1;
@@ -186,7 +212,7 @@ public class XmlGenerationService {
             int competenceIndex = 1;
             for (CompetenceInput competence : bucket.competences) {
                 String id = questionId(categoryIndex, competenceIndex);
-                String label = select(language, competence.name(), competence.nameEn());
+                String label = select(language, competence.questionRight(), competence.questionRightEn());
 
                 String sectionKey = safe(competence.subcategory()).isBlank() ? bucket.name : competence.subcategory();
                 ReportSection section = sections.computeIfAbsent(sectionKey.toLowerCase(Locale.ROOT),
