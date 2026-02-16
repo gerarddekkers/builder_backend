@@ -22,6 +22,11 @@ builder:
       driver-class-name: com.mysql.cj.jdbc.Driver
   google:
     apiKey: ${GOOGLE_API_KEY:}
+  s3:
+    enabled: ${BUILDER_S3_ENABLED:false}
+    bucket: ${BUILDER_S3_BUCKET:metro-platform}
+    region: ${BUILDER_S3_REGION:eu-west-1}
+    prefix: ${BUILDER_S3_PREFIX:test}
   auth:
     enabled: ${BUILDER_AUTH_ENABLED:false}
     username: ${BUILDER_AUTH_USER:tester}

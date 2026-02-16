@@ -10,8 +10,10 @@ import com.mentesme.builder.model.CategorySearchResult;
 
 import com.mentesme.builder.model.GroupSearchResult;
 
-import java.util.Optional;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @ConditionalOnProperty(name = "builder.metro.enabled", havingValue = "true")
@@ -150,6 +152,22 @@ public class MetroLookupRepository {
             if (sql != null && !sql.isBlank()) {
                 jdbcTemplate.execute(sql);
             }
+        }
+    }
+
+    /**
+     * Update questionnaire_translations with S3 URLs for questions and report XML.
+     * Uses parameterized query to prevent SQL injection.
+     */
+    public void updateTranslationUrls(long questionnaireId, String language,
+                                       String questionsUrl, String reportUrl) {
+        String sql = "UPDATE questionnaire_translations SET questions = ?, report = ? " +
+                     "WHERE questionnaireId = ? AND language = ?";
+        int updated = jdbcTemplate.update(sql, questionsUrl, reportUrl, questionnaireId, language);
+        if (updated == 0) {
+            throw new IllegalStateException(
+                    "No questionnaire_translation found for questionnaireId=" + questionnaireId
+                    + ", language=" + language + ". Cannot set XML URLs.");
         }
     }
 
