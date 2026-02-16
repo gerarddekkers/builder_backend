@@ -3,6 +3,8 @@ package com.mentesme.builder.service;
 import com.mentesme.builder.model.AssessmentBuildRequest;
 import com.mentesme.builder.model.CompetenceInput;
 import com.mentesme.builder.model.IntegrationPreviewResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,12 +19,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class MetroIntegrationService {
 
+    private static final Logger log = LoggerFactory.getLogger(MetroIntegrationService.class);
+
     private final AtomicLong competenceSequence;
     private final AtomicLong categorySequence;
     private final AtomicLong goalSequence;
     private final AtomicLong questionnaireSequence;
     private final AtomicLong itemSequence;
-    private final MetroLookupRepository lookupRepository;
+    private final ObjectProvider<MetroLookupRepository> lookupRepositoryProvider;
+    private MetroLookupRepository lookupRepository;
     private volatile String lookupError;
 
     public MetroIntegrationService(
@@ -33,6 +38,7 @@ public class MetroIntegrationService {
             @Value("${builder.integration.questionnaireStartId:200}") long questionnaireStartId,
             @Value("${builder.integration.itemStartId:5000}") long itemStartId
     ) {
+        this.lookupRepositoryProvider = lookupRepositoryProvider;
         this.lookupRepository = lookupRepositoryProvider.getIfAvailable();
         long competenceSeed = resolveStartId(competenceStartId, "competences");
         long categorySeed = resolveStartId(categoryStartId, "categories");
@@ -45,9 +51,50 @@ public class MetroIntegrationService {
         this.goalSequence = new AtomicLong(goalSeed);
         this.questionnaireSequence = new AtomicLong(questionnaireSeed);
         this.itemSequence = new AtomicLong(itemSeed);
+
+    }
+
+    /**
+     * Lazy-resolve lookupRepository als het bij constructie null was.
+     */
+    private MetroLookupRepository getLookupRepository() {
+        if (lookupRepository == null) {
+            lookupRepository = lookupRepositoryProvider.getIfAvailable();
+        }
+        return lookupRepository;
+    }
+
+    /**
+     * Herlaad sequence-waarden van de DB zodat we altijd boven MAX(id) zitten.
+     * Wordt aangeroepen aan het begin van elke generatePreview().
+     */
+    private void refreshSequences() {
+        MetroLookupRepository repo = getLookupRepository();
+        if (repo == null) {
+            return;
+        }
+        try {
+            long qMax  = repo.getMaxId("questionnaires");
+            long catMax = repo.getMaxId("categories");
+            long cMax  = repo.getMaxId("competences");
+            long gMax  = repo.getMaxId("goals");
+            long iMax  = repo.getMaxId("items");
+
+            questionnaireSequence.set(Math.max(questionnaireSequence.get(), qMax + 1));
+            categorySequence.set(Math.max(categorySequence.get(), catMax + 1));
+            competenceSequence.set(Math.max(competenceSequence.get(), cMax + 1));
+            goalSequence.set(Math.max(goalSequence.get(), gMax + 1));
+            itemSequence.set(Math.max(itemSequence.get(), iMax + 1));
+
+        } catch (Exception ex) {
+            log.warn("refreshSequences failed: {}", ex.getMessage());
+        }
     }
 
     public IntegrationPreviewResponse generatePreview(AssessmentBuildRequest request) {
+        // Herlaad sequences van DB zodat IDs altijd boven huidige MAX zitten
+        refreshSequences();
+
         List<String> sql = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
 
@@ -58,9 +105,9 @@ public class MetroIntegrationService {
         String truncatedName = truncate(assessmentName, 30, warnings);
 
         long questionnaireId = questionnaireSequence.incrementAndGet();
-        sql.add("INSERT IGNORE INTO questionnaires (id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
-        sql.add("INSERT IGNORE INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
-        sql.add("INSERT IGNORE INTO questionnaire_translations (questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+        sql.add("INSERT INTO questionnaires(id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
+        sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
+        sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
 
         long newCompetenceCount = 0;
         long newCategoryCount = 0;
@@ -78,9 +125,9 @@ public class MetroIntegrationService {
                 categoryId = lookupExistingCategoryId(categoryName);
                 if (categoryId == null) {
                     categoryId = categorySequence.incrementAndGet();
-                    sql.add("INSERT IGNORE INTO categories (id, name) VALUES (" + categoryId + ", '" + escape(categoryName) + "');");
-                    sql.add("INSERT IGNORE INTO category_translations (categoryId, language, name) VALUES (" + categoryId + ", 'nl', '" + escape(categoryName) + "');");
-                    sql.add("INSERT IGNORE INTO category_translations (categoryId, language, name) VALUES (" + categoryId + ", 'en', '" + escape(categoryName) + "');");
+                    sql.add("INSERT INTO categories(id, name) VALUES (" + categoryId + ", '" + escape(categoryName) + "');");
+                    sql.add("INSERT INTO category_translations(categoryId, language, name) VALUES (" + categoryId + ", 'nl', '" + escape(categoryName) + "');");
+                    sql.add("INSERT INTO category_translations(categoryId, language, name) VALUES (" + categoryId + ", 'en', '" + escape(categoryName) + "');");
                     newCategoryCount++;
                 }
                 categoryIds.put(categoryKey, categoryId);
@@ -94,9 +141,9 @@ public class MetroIntegrationService {
                     goalId = lookupExistingGoalId(subcategoryName);
                     if (goalId == null) {
                         goalId = goalSequence.incrementAndGet();
-                        sql.add("INSERT IGNORE INTO goals (id, name) VALUES (" + goalId + ", '" + escape(subcategoryName) + "');");
-                        sql.add("INSERT IGNORE INTO goal_translations (goalId, language, name) VALUES (" + goalId + ", 'nl', '" + escape(subcategoryName) + "');");
-                        sql.add("INSERT IGNORE INTO goal_translations (goalId, language, name) VALUES (" + goalId + ", 'en', '" + escape(subcategoryName) + "');");
+                        sql.add("INSERT INTO goals(id, name) VALUES (" + goalId + ", '" + escape(subcategoryName) + "');");
+                        sql.add("INSERT INTO goal_translations(goalId, language, name) VALUES (" + goalId + ", 'nl', '" + escape(subcategoryName) + "');");
+                        sql.add("INSERT INTO goal_translations(goalId, language, name) VALUES (" + goalId + ", 'en', '" + escape(subcategoryName) + "');");
                         newGoalCount++;
                     }
                     goalIds.put(goalKey, goalId);
@@ -115,14 +162,14 @@ public class MetroIntegrationService {
                 String nameEn = safeTrim(input.nameEn());
                 String descriptionEn = safeTrim(input.descriptionEn());
 
-                sql.add("INSERT IGNORE INTO competences (id, name, description, defaultMinPassScore, defaultMinMentorScore) VALUES (" +
+                sql.add("INSERT INTO competences(id, name, description, defaultMinPassScore, defaultMinMentorScore) VALUES (" +
                         competenceId + ", '" + escape(competenceName) + "', " + nullOrQuoted(description) + ", NULL, NULL);");
 
-                sql.add("INSERT IGNORE INTO competence_translations (competenceId, language, name, description) VALUES (" + competenceId + ", 'nl', '" + escape(competenceName) + "', " + nullOrQuoted(description) + ");");
+                sql.add("INSERT INTO competence_translations(competenceId, language, name, description) VALUES (" + competenceId + ", 'nl', '" + escape(competenceName) + "', " + nullOrQuoted(description) + ");");
 
                 String effectiveEnName = nameEn.isBlank() ? competenceName : nameEn;
                 String effectiveEnDescription = descriptionEn.isBlank() ? description : descriptionEn;
-                sql.add("INSERT IGNORE INTO competence_translations (competenceId, language, name, description) VALUES (" + competenceId + ", 'en', '" + escape(effectiveEnName) + "', " + nullOrQuoted(effectiveEnDescription) + ");");
+                sql.add("INSERT INTO competence_translations(competenceId, language, name, description) VALUES (" + competenceId + ", 'en', '" + escape(effectiveEnName) + "', " + nullOrQuoted(effectiveEnDescription) + ");");
                 newCompetenceCount++;
             }
 
@@ -148,7 +195,7 @@ public class MetroIntegrationService {
                 String itemName = safeTrim(input.name()) + "_item";
 
                 // Create item
-                sql.add("INSERT IGNORE INTO items (id, name, invertOrder) VALUES (" + itemId + ", '" + escape(itemName) + "', 0);");
+                sql.add("INSERT INTO items(id, name, invertOrder) VALUES (" + itemId + ", '" + escape(itemName) + "', 0);");
 
                 // Create item translations (leftText = Niet-vraag, rightText = Wel-vraag)
                 String effectiveLeftNl = questionLeft.isBlank() ? questionRight : questionLeft;
@@ -156,9 +203,9 @@ public class MetroIntegrationService {
                 String effectiveLeftEn = questionLeftEn.isBlank() ? effectiveLeftNl : questionLeftEn;
                 String effectiveRightEn = questionRightEn.isBlank() ? effectiveRightNl : questionRightEn;
 
-                sql.add("INSERT IGNORE INTO item_translations (itemId, language, leftText, rightText) VALUES (" +
+                sql.add("INSERT INTO item_translations(itemId, language, leftText, rightText) VALUES (" +
                         itemId + ", 'nl', '" + escape(effectiveLeftNl) + "', '" + escape(effectiveRightNl) + "');");
-                sql.add("INSERT IGNORE INTO item_translations (itemId, language, leftText, rightText) VALUES (" +
+                sql.add("INSERT INTO item_translations(itemId, language, leftText, rightText) VALUES (" +
                         itemId + ", 'en', '" + escape(effectiveLeftEn) + "', '" + escape(effectiveRightEn) + "');");
 
                 // Link item to questionnaire
@@ -185,11 +232,12 @@ public class MetroIntegrationService {
     }
 
     private long resolveStartId(long fallback, String table) {
-        if (lookupRepository == null) {
+        MetroLookupRepository repo = getLookupRepository();
+        if (repo == null) {
             return fallback;
         }
         try {
-            long maxId = lookupRepository.getMaxId(table);
+            long maxId = repo.getMaxId(table);
             return Math.max(fallback, maxId + 1);
         } catch (Exception ex) {
             recordLookupError(ex);
@@ -198,11 +246,12 @@ public class MetroIntegrationService {
     }
 
     private Long lookupExistingCategoryId(String categoryName) {
-        if (lookupRepository == null) {
+        MetroLookupRepository repo = getLookupRepository();
+        if (repo == null) {
             return null;
         }
         try {
-            return lookupRepository.findCategoryIdByName(categoryName).orElse(null);
+            return repo.findCategoryIdByName(categoryName).orElse(null);
         } catch (Exception ex) {
             recordLookupError(ex);
             return null;
@@ -210,11 +259,12 @@ public class MetroIntegrationService {
     }
 
     private Long lookupExistingGoalId(String goalName) {
-        if (lookupRepository == null) {
+        MetroLookupRepository repo = getLookupRepository();
+        if (repo == null) {
             return null;
         }
         try {
-            return lookupRepository.findGoalIdByName(goalName).orElse(null);
+            return repo.findGoalIdByName(goalName).orElse(null);
         } catch (Exception ex) {
             recordLookupError(ex);
             return null;
@@ -222,11 +272,12 @@ public class MetroIntegrationService {
     }
 
     private Long lookupExistingCompetenceId(String competenceName) {
-        if (lookupRepository == null) {
+        MetroLookupRepository repo = getLookupRepository();
+        if (repo == null) {
             return null;
         }
         try {
-            return lookupRepository.findCompetenceIdByName(competenceName).orElse(null);
+            return repo.findCompetenceIdByName(competenceName).orElse(null);
         } catch (Exception ex) {
             recordLookupError(ex);
             return null;
