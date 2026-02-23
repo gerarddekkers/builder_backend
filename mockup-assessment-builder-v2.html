@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment Builder – Mockup v2</title>
+<style>
+  /* ── Reset & base ──────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background: #f5f6fa;
+    color: #1f2933;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --primary-border: #bfdbfe;
+    --success: #16a34a;
+    --success-bg: #dcfce7;
+    --success-border: #86efac;
+    --warning: #d97706;
+    --warning-bg: #fef3c7;
+    --danger: #dc2626;
+    --bg: #f5f6fa;
+    --panel: #ffffff;
+    --text: #1f2933;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  .app { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+
+  /* ── Env bar ───────────────────────────────────────── */
+  .env-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 4px 24px; font-size: 11px;
+    background: #f8f9fa; border-bottom: 1px solid var(--border-light);
+  }
+  .env-bar-label {
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 3px; font-size: 10px;
+    background: #dbeafe; color: #1e40af;
+  }
+  .env-bar-links a { color: var(--text-secondary); text-decoration: none; font-size: 11px; }
+  .env-bar-links a:hover { color: var(--primary); text-decoration: underline; }
+  .env-bar-links a + a::before { content: "·"; margin: 0 8px; color: var(--text-secondary); }
+
+  /* ── Header ────────────────────────────────────────── */
+  .header {
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    padding: 16px 24px; display: flex; justify-content: space-between;
+    align-items: center; position: sticky; top: 0; z-index: 50;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header p { font-size: 13px; color: var(--text-secondary); }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .header-btn {
+    padding: 8px 14px; font-size: 13px; font-weight: 600;
+    border-radius: var(--radius-sm); border: none; cursor: pointer;
+    background: var(--border-light); color: var(--text);
+  }
+  .header-btn:hover { background: #e2e8f0; }
+  .header-btn-new { background: var(--primary); color: white; }
+  .header-btn-publish { background: var(--success); color: white; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  .header-btn-publish-prod { background: #15803d; color: white; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 8px 8px; border-left: 1px solid rgba(255,255,255,0.2); }
+  .publish-dropdown { display: flex; }
+  .header-btn-logout { background: transparent; border: 1px solid #fecaca; color: var(--danger); }
+
+  /* ── Wizard nav ────────────────────────────────────── */
+  .wizard-nav {
+    display: flex; background: white; border-radius: var(--radius);
+    padding: 8px; margin: 24px 0 20px;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.06); align-items: center;
+  }
+  .wizard-step {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; border-radius: var(--radius-sm);
+    border: none; background: none; cursor: pointer; font-size: 14px;
+    color: var(--text-muted);
+  }
+  .wizard-step.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+  .wizard-step.complete { color: var(--success); }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; background: #e2e8f0; color: var(--text-secondary);
+  }
+  .wizard-step.active .step-num { background: rgba(255,255,255,0.25); color: white; }
+  .wizard-step.complete .step-num { background: var(--success-bg); color: var(--success); }
+  .step-label { font-weight: 600; }
+  .wizard-connector { width: 24px; height: 2px; background: #e2e8f0; flex-shrink: 0; }
+  .wizard-connector.done { background: var(--success); }
+
+  /* ── Panel ─────────────────────────────────────────── */
+  .panel {
+    background: white; border-radius: var(--radius); padding: 28px;
+    box-shadow: 0 10px 25px rgba(15,23,42,0.06);
+  }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .panel-header h2 { font-size: 20px; font-weight: 700; }
+
+  /* ── NEW: Section blocks ───────────────────────────── */
+  .section-block {
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--border);
+  }
+  .section-block:last-child { margin-bottom: 0; }
+
+  /* Color variants per section */
+  .section-block.blue {
+    background: #f8faff;
+    border-left-color: #2563eb;
+    border-top: 1px solid #dbeafe;
+    border-right: 1px solid #dbeafe;
+    border-bottom: 1px solid #dbeafe;
+  }
+  .section-block.purple {
+    background: #faf8ff;
+    border-left-color: #7c3aed;
+    border-top: 1px solid #e9e0fd;
+    border-right: 1px solid #e9e0fd;
+    border-bottom: 1px solid #e9e0fd;
+  }
+  .section-block.green {
+    background: #f7fdf9;
+    border-left-color: #16a34a;
+    border-top: 1px solid #bbf7d0;
+    border-right: 1px solid #bbf7d0;
+    border-bottom: 1px solid #bbf7d0;
+  }
+  .section-block.amber {
+    background: #fffcf5;
+    border-left-color: #d97706;
+    border-top: 1px solid #fcd34d;
+    border-right: 1px solid #fcd34d;
+    border-bottom: 1px solid #fcd34d;
+  }
+  .section-block.rose {
+    background: #fff5f7;
+    border-left-color: #e11d48;
+    border-top: 1px solid #fecdd3;
+    border-right: 1px solid #fecdd3;
+    border-bottom: 1px solid #fecdd3;
+  }
+  .section-block.teal {
+    background: #f0fdfa;
+    border-left-color: #0d9488;
+    border-top: 1px solid #99f6e4;
+    border-right: 1px solid #99f6e4;
+    border-bottom: 1px solid #99f6e4;
+  }
+  .section-block.slate {
+    background: #f8fafc;
+    border-left-color: #475569;
+    border-top: 1px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .section-block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .section-block-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .section-block-icon.blue { background: #dbeafe; color: #2563eb; }
+  .section-block-icon.purple { background: #e9e0fd; color: #7c3aed; }
+  .section-block-icon.amber { background: #fef3c7; color: #92400e; }
+  .section-block-icon.green { background: #bbf7d0; color: #166534; }
+  .section-block-icon.rose { background: #fecdd3; color: #9f1239; }
+  .section-block-icon.teal { background: #99f6e4; color: #115e59; }
+  .section-block-icon.slate { background: #cbd5e1; color: #334155; }
+
+  .section-block-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .section-block-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* ── Form fields ───────────────────────────────────── */
+  .form-group { margin-bottom: 16px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label {
+    display: block; font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); margin-bottom: 6px;
+  }
+  .form-label .required { color: var(--danger); margin-left: 2px; }
+  .form-label .translated { font-size: 11px; color: var(--success); font-weight: 500; margin-left: 8px; opacity: 0.8; }
+  input[type="text"], textarea {
+    width: 100%; padding: 11px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); font-size: 14px;
+    font-family: inherit; background: white; color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus, textarea:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  textarea { resize: vertical; }
+  .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ── NEW: Inline field pair (NL + EN side by side) ── */
+  .field-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .field-pair .form-group { margin-bottom: 0; }
+  .field-lang-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .field-lang-tag.nl { background: #fed7aa; color: #9a3412; }
+  .field-lang-tag.en { background: #dbeafe; color: #1e40af; }
+
+  /* ── NEW: Group chips ──────────────────────────────── */
+  .group-chips {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+  }
+  .group-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+    background: var(--success-bg); color: #166534;
+    border: 1px solid var(--success-border);
+  }
+  .group-chip-x {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(22,101,52,0.1); color: #166534;
+    cursor: pointer; font-size: 12px; border: none;
+  }
+
+  /* ── NL/EN toggle ──────────────────────────────────── */
+  .lang-toggle {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .lang-toggle button {
+    padding: 6px 14px; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; background: white; color: var(--text-secondary);
+  }
+  .lang-toggle button.active { background: var(--primary); color: white; }
+
+  /* ── Competence matrix (Step 2) ────────────────────── */
+  .category-box {
+    border: 1px solid var(--border); border-radius: 14px;
+    background: #fafbfc; margin-bottom: 16px; overflow: hidden;
+  }
+  .category-box-header {
+    background: var(--border-light); padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .category-box-header strong { font-size: 15px; font-weight: 700; }
+  .category-box-header .badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 6px;
+  }
+  .badge-existing { background: var(--success-bg); color: #166534; }
+  .badge-new { background: var(--warning-bg); color: #92400e; }
+  .category-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+  .competence-item {
+    background: white; border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .competence-item-main { padding: 14px 16px; }
+  .competence-item-name {
+    font-size: 14px; font-weight: 600; margin-bottom: 2px;
+  }
+  .competence-item-en { font-size: 13px; color: var(--text-secondary); }
+  .competence-item-meta {
+    display: flex; gap: 8px; margin-top: 8px; align-items: center;
+  }
+
+  /* ── NEW: Question cards (Step 3) improved ─────────── */
+  .question-card {
+    background: white; border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; margin-bottom: 12px;
+  }
+  .qcard-header {
+    padding: 14px 18px; border-bottom: 1px solid var(--border-light);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .qcard-header-name { font-size: 15px; font-weight: 700; }
+  .qcard-status {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 6px;
+  }
+  .qcard-status.complete { background: var(--success-bg); color: #166534; }
+  .qcard-status.partial { background: var(--warning-bg); color: #92400e; }
+  .qcard-status.empty { background: var(--border-light); color: var(--text-muted); }
+
+  .qcard-body { padding: 18px; }
+
+  /* NEW: question pole layout */
+  .question-poles {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 12px;
+  }
+  .question-poles:last-child { margin-bottom: 0; }
+
+  .question-pole {
+    padding: 14px 16px;
+    border-radius: 10px;
+    position: relative;
+  }
+  .question-pole.left {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+  }
+  .question-pole.right {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+  }
+  .question-pole-label {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .question-pole-label.left { color: #991b1b; }
+  .question-pole-label.right { color: #166534; }
+  .pole-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .pole-icon.left { background: #dc2626; color: white; }
+  .pole-icon.right { background: #16a34a; color: white; }
+  .question-pole textarea {
+    background: white; border-color: transparent;
+    font-size: 14px;
+  }
+  .question-pole.left textarea:focus { border-color: #fca5a5; box-shadow: 0 0 0 3px rgba(220,38,38,0.08); }
+  .question-pole.right textarea:focus { border-color: #86efac; box-shadow: 0 0 0 3px rgba(22,163,74,0.08); }
+
+  .question-connector {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 0 12px;
+  }
+  .question-connector-line {
+    width: 2px; flex: 1; background: var(--border);
+  }
+  .question-connector-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--border-light); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--text-muted); margin: 6px 0;
+  }
+
+  /* ── NEW: Review improvements ──────────────────────── */
+  .review-card {
+    border: 1px solid var(--border); border-radius: 14px;
+    background: white; margin-bottom: 16px; overflow: hidden;
+  }
+  .review-card-header {
+    padding: 14px 18px; background: var(--border-light);
+    font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .review-card-header .icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .review-card-body { padding: 16px 18px; }
+  .review-field {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0; border-bottom: 1px solid var(--border-light);
+  }
+  .review-field:last-child { border-bottom: none; }
+  .review-field-label { font-size: 13px; color: var(--text-secondary); }
+  .review-field-value { font-size: 14px; font-weight: 600; text-align: right; max-width: 60%; }
+  .review-field-value.missing { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+  /* ── Footer nav ────────────────────────────────────── */
+  .footer-nav {
+    display: flex; justify-content: space-between; padding-top: 16px;
+  }
+  button.primary {
+    padding: 12px 24px; border-radius: 12px; border: none;
+    background: var(--primary); color: white; font-size: 14px;
+    font-weight: 600; cursor: pointer;
+  }
+  button.primary:hover { background: var(--primary-hover); }
+  button.outline {
+    padding: 12px 24px; border-radius: 12px;
+    border: 1px solid var(--border); background: white;
+    color: var(--text-secondary); font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* ── Separator between mockup views ────────────────── */
+  .mockup-sep {
+    text-align: center; padding: 48px 0 24px;
+    color: var(--text-muted); font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .mockup-sep::before, .mockup-sep::after {
+    content: ""; display: inline-block; width: 60px; height: 1px;
+    background: var(--border); vertical-align: middle; margin: 0 16px;
+  }
+
+  /* ── Summary bar ───────────────────────────────────── */
+  .summary-bar {
+    background: var(--border-light); border-radius: var(--radius-sm);
+    padding: 14px 18px; display: flex; gap: 24px; font-size: 13px;
+  }
+  .summary-stat-num { font-size: 16px; font-weight: 700; color: var(--text); }
+  .summary-stat-label { color: var(--text-secondary); }
+
+  /* ── Cat section (step 3 header) ───────────────────── */
+  .cat-section-title {
+    font-size: 14px; font-weight: 700; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--border);
+    margin-bottom: 14px; display: flex; justify-content: space-between;
+  }
+  .cat-section-progress { font-size: 12px; font-weight: 600; }
+  .cat-section-progress.complete { color: var(--success); }
+  .cat-section-progress.partial { color: var(--warning); }
+
+  /* ── Comparison: current vs new ────────────────────── */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+  .compare-col { min-width: 0; }
+  .compare-label {
+    text-align: center; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); margin-bottom: 12px;
+    padding: 6px; border-radius: 6px;
+  }
+  .compare-label.old { background: #fef2f2; color: #991b1b; }
+  .compare-label.new { background: #dcfce7; color: #166534; }
+
+  /* ── Annotation arrows ─────────────────────────────── */
+  .annotation {
+    background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;
+    padding: 10px 14px; font-size: 12px; color: #92400e; margin: 12px 0;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .annotation-icon { font-size: 16px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- STAP 1: Assessment Info — NIEUW ONTWERP                        -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+
+<div class="env-bar">
+  <span class="env-bar-label">TEST</span>
+  <span class="env-bar-links">
+    <a href="#">Assessment Builder (prod)</a>
+    <a href="#">Leerroutes (test)</a>
+    <a href="#">Leerroutes (prod)</a>
+  </span>
+</div>
+
+<header class="header">
+  <div>
+    <h1>Assessment Builder</h1>
+    <p>MentesMe Competentie Assessment Platform</p>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn">Opslaan</button>
+    <button class="header-btn">Openen</button>
+    <button class="header-btn header-btn-new">+ Nieuw</button>
+    <div class="publish-dropdown">
+      <button class="header-btn header-btn-publish">Publish</button>
+      <button class="header-btn header-btn-publish-prod">▾</button>
+    </div>
+    <button class="header-btn header-btn-logout">Uitloggen</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="wizard-nav">
+    <button class="wizard-step active">
+      <span class="step-num">1</span>
+      <span class="step-label">Assessment</span>
+    </button>
+    <div class="wizard-connector done"></div>
+    <button class="wizard-step complete">
+      <span class="step-num">✓</span>
+      <span class="step-label">Competenties</span>
+    </button>
+    <div class="wizard-connector"></div>
+    <button class="wizard-step">
+      <span class="step-num">3</span>
+      <span class="step-label">Vragen</span>
+    </button>
+    <div class="wizard-connector"></div>
+    <button class="wizard-step">
+      <span class="step-num">4</span>
+      <span class="step-label">Review</span>
+    </button>
+  </nav>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Assessment informatie</h2>
+      <div class="lang-toggle">
+        <button class="active">NL</button>
+        <button>EN</button>
+      </div>
+    </div>
+
+    <!-- ── Naam & Beschrijving ─────────────────────────── -->
+    <div class="section-block blue">
+      <div class="section-block-header">
+        <div class="section-block-icon blue">📝</div>
+        <div>
+          <div class="section-block-title">Naam & Beschrijving</div>
+          <div class="section-block-subtitle">Hoe heet het assessment en wat meet het?</div>
+        </div>
+      </div>
+      <div class="field-pair">
+        <div class="form-group">
+          <label class="form-label">Assessment naam <span class="field-lang-tag nl">NL</span> <span class="required">*</span></label>
+          <input type="text" value="ORM Assessment" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assessment naam <span class="field-lang-tag en">EN</span> <span class="translated">✓ vertaald</span></label>
+          <input type="text" value="ORM Assessment" style="background:#f0f9ff;" />
+        </div>
+      </div>
+      <div style="margin-top: 14px;">
+        <div class="field-pair">
+          <div class="form-group">
+            <label class="form-label">Beschrijving <span class="field-lang-tag nl">NL</span></label>
+            <textarea rows="3">Dit assessment meet organisatie-risico management competenties op basis van de ISO 31000 standaard.</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Beschrijving <span class="field-lang-tag en">EN</span> <span class="translated">✓ vertaald</span></label>
+            <textarea rows="3" style="background:#f0f9ff;">This assessment measures organisational risk management competences based on the ISO 31000 standard.</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Instructie ──────────────────────────────────── -->
+    <div class="section-block purple">
+      <div class="section-block-header">
+        <div class="section-block-icon purple">💡</div>
+        <div>
+          <div class="section-block-title">Instructie voor deelnemers</div>
+          <div class="section-block-subtitle">Uitleg die deelnemers zien voordat ze het assessment starten</div>
+        </div>
+      </div>
+      <div class="field-pair">
+        <div class="form-group">
+          <label class="form-label">Instructie <span class="field-lang-tag nl">NL</span></label>
+          <textarea rows="3">Beoordeel elke stelling op een schaal van 1 tot 5. Er zijn geen goede of foute antwoorden.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Instructie <span class="field-lang-tag en">EN</span> <span class="translated">✓ vertaald</span></label>
+          <textarea rows="3" style="background:#f0f9ff;">Rate each statement on a scale of 1 to 5. There are no right or wrong answers.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Groepen ─────────────────────────────────────── -->
+    <div class="section-block green">
+      <div class="section-block-header">
+        <div class="section-block-icon green">👥</div>
+        <div>
+          <div class="section-block-title">Doelgroepen</div>
+          <div class="section-block-subtitle">Selecteer de groepen die dit assessment mogen invullen</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Groepen zoeken <span class="required">*</span></label>
+        <input type="text" placeholder="Zoek groep op naam..." />
+        <div class="group-chips">
+          <span class="group-chip">HR Professionals <button class="group-chip-x">×</button></span>
+          <span class="group-chip">Management Team <button class="group-chip-x">×</button></span>
+          <span class="group-chip">Risk Officers <button class="group-chip-x">×</button></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-nav">
+      <div></div>
+      <button class="primary">Volgende: Competenties →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mockup-sep">Stap 2: Competenties</div>
+  <!-- ════════════════════════════════════════════════════════════ -->
+
+  <div class="panel" style="margin-top: 24px;">
+    <div class="panel-header">
+      <h2>Competentie-matrix</h2>
+      <div class="lang-toggle">
+        <button class="active">NL</button>
+        <button>EN</button>
+      </div>
+    </div>
+
+    <!-- Samenvatting -->
+    <div class="section-block slate">
+      <div class="section-block-header">
+        <div class="section-block-icon slate">📊</div>
+        <div>
+          <div class="section-block-title">Overzicht</div>
+          <div class="section-block-subtitle">Huidige status van de competentie-matrix</div>
+        </div>
+      </div>
+      <div class="summary-bar">
+        <div><span class="summary-stat-num">3</span> <span class="summary-stat-label">categorieën</span></div>
+        <div><span class="summary-stat-num">12</span> <span class="summary-stat-label">competenties</span></div>
+        <div><span class="summary-stat-num" style="color: var(--success);">8</span> <span class="summary-stat-label">bestaand</span></div>
+        <div><span class="summary-stat-num" style="color: var(--warning);">4</span> <span class="summary-stat-label">nieuw</span></div>
+      </div>
+    </div>
+
+    <!-- Categorie 1 -->
+    <div class="section-block amber">
+      <div class="section-block-header">
+        <div class="section-block-icon amber">🏢</div>
+        <div>
+          <div class="section-block-title">Risico-identificatie <span class="badge badge-existing" style="font-size:11px; padding:2px 8px; border-radius:6px; margin-left:8px;">Bestaand</span></div>
+          <div class="section-block-subtitle">Risk Identification · 4 competenties</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label">Categorie beschrijving</label>
+        <textarea rows="2" style="font-size:13px;">Het vermogen om potentiële risico's te herkennen en in kaart te brengen.</textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="competence-item">
+          <div class="competence-item-main">
+            <div class="competence-item-name">Risicoanalyse</div>
+            <div class="competence-item-en">Risk Analysis</div>
+            <div class="competence-item-meta">
+              <span class="badge badge-existing" style="font-size:11px; padding:2px 8px; border-radius:6px;">Bestaand (ID: 45)</span>
+            </div>
+          </div>
+        </div>
+        <div class="competence-item">
+          <div class="competence-item-main">
+            <div class="competence-item-name">Risicobewustzijn</div>
+            <div class="competence-item-en">Risk Awareness</div>
+            <div class="competence-item-meta">
+              <span class="badge badge-new" style="font-size:11px; padding:2px 8px; border-radius:6px;">+ Nieuw</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categorie 2 -->
+    <div class="section-block teal">
+      <div class="section-block-header">
+        <div class="section-block-icon teal">🛡️</div>
+        <div>
+          <div class="section-block-title">Risicobeheersing <span class="badge badge-existing" style="font-size:11px; padding:2px 8px; border-radius:6px; margin-left:8px;">Bestaand</span></div>
+          <div class="section-block-subtitle">Risk Management · 4 competenties</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label">Categorie beschrijving</label>
+        <textarea rows="2" style="font-size:13px;">Het vermogen om geïdentificeerde risico's effectief te beheersen en te mitigeren.</textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="competence-item">
+          <div class="competence-item-main">
+            <div class="competence-item-name">Preventief handelen</div>
+            <div class="competence-item-en">Preventive Action</div>
+            <div class="competence-item-meta">
+              <span class="badge badge-existing" style="font-size:11px; padding:2px 8px; border-radius:6px;">Bestaand (ID: 48)</span>
+            </div>
+          </div>
+        </div>
+        <div class="competence-item">
+          <div class="competence-item-main">
+            <div class="competence-item-name">Crisismanagement</div>
+            <div class="competence-item-en">Crisis Management</div>
+            <div class="competence-item-meta">
+              <span class="badge badge-existing" style="font-size:11px; padding:2px 8px; border-radius:6px;">Bestaand (ID: 52)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categorie 3 -->
+    <div class="section-block rose">
+      <div class="section-block-header">
+        <div class="section-block-icon rose">📈</div>
+        <div>
+          <div class="section-block-title">Risico-evaluatie <span class="badge badge-new" style="font-size:11px; padding:2px 8px; border-radius:6px; margin-left:8px;">+ Nieuw</span></div>
+          <div class="section-block-subtitle">Risk Evaluation · 4 competenties</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label">Categorie beschrijving</label>
+        <textarea rows="2" style="font-size:13px;">Het vermogen om de ernst en waarschijnlijkheid van risico's te beoordelen.</textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="competence-item">
+          <div class="competence-item-main">
+            <div class="competence-item-name">Impact-analyse</div>
+            <div class="competence-item-en">Impact Analysis</div>
+            <div class="competence-item-meta">
+              <span class="badge badge-new" style="font-size:11px; padding:2px 8px; border-radius:6px;">+ Nieuw</span>
+            </div>
+          </div>
+        </div>
+        <div class="competence-item">
+          <div class="competence-item-main">
+            <div class="competence-item-name">Prioritering</div>
+            <div class="competence-item-en">Prioritisation</div>
+            <div class="competence-item-meta">
+              <span class="badge badge-new" style="font-size:11px; padding:2px 8px; border-radius:6px;">+ Nieuw</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-nav">
+      <button class="outline">← Terug</button>
+      <button class="primary">Volgende: Vragen →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mockup-sep">Stap 3: Vragen — Nieuw pole-layout</div>
+  <!-- ════════════════════════════════════════════════════════════ -->
+
+  <div class="panel" style="margin-top: 24px;">
+    <div class="panel-header">
+      <h2>Vragenlijst opstellen</h2>
+      <div class="lang-toggle">
+        <button class="active">NL</button>
+        <button>EN</button>
+      </div>
+    </div>
+
+    <!-- Voortgang -->
+    <div class="section-block slate">
+      <div class="section-block-header">
+        <div class="section-block-icon slate">📊</div>
+        <div>
+          <div class="section-block-title">Voortgang</div>
+          <div class="section-block-subtitle">Status van alle vragen</div>
+        </div>
+      </div>
+      <div class="summary-bar">
+        <div><span class="summary-stat-num">12</span> <span class="summary-stat-label">competenties</span></div>
+        <div><span class="summary-stat-num">24</span> <span class="summary-stat-label">vragen totaal</span></div>
+        <div><span class="summary-stat-num" style="color: var(--success);">20</span> <span class="summary-stat-label">compleet</span></div>
+        <div><span class="summary-stat-num" style="color: var(--warning);">4</span> <span class="summary-stat-label">onvolledig</span></div>
+      </div>
+    </div>
+
+    <!-- Categorie 1: Vragen -->
+    <div class="section-block amber">
+      <div class="section-block-header">
+        <div class="section-block-icon amber">🏢</div>
+        <div>
+          <div class="section-block-title">Risico-identificatie</div>
+          <div class="section-block-subtitle">4 competenties · <span style="color: var(--success); font-weight: 600;">4/4 vragen compleet</span></div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-header-name">Risicoanalyse</span>
+          <span class="qcard-status complete">✓ Compleet</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-poles">
+            <div class="question-pole left">
+              <div class="question-pole-label left">
+                <span class="pole-icon left">✗</span>
+                Niet-vraag
+              </div>
+              <textarea rows="2">Ik analyseer risico's zelden systematisch en vertrouw vooral op mijn gevoel.</textarea>
+            </div>
+            <div class="question-connector">
+              <div class="question-connector-line"></div>
+              <div class="question-connector-icon">⟷</div>
+              <div class="question-connector-line"></div>
+            </div>
+            <div class="question-pole right">
+              <div class="question-pole-label right">
+                <span class="pole-icon right">✓</span>
+                Wel-vraag
+              </div>
+              <textarea rows="2">Ik analyseer risico's systematisch en gebruik bewezen methoden en frameworks.</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="question-card" style="margin-top: 10px;">
+        <div class="qcard-header">
+          <span class="qcard-header-name">Risicobewustzijn</span>
+          <span class="qcard-status partial">◐ Gedeeltelijk</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-poles">
+            <div class="question-pole left">
+              <div class="question-pole-label left">
+                <span class="pole-icon left">✗</span>
+                Niet-vraag
+              </div>
+              <textarea rows="2">Ik denk zelden na over mogelijke risico's bij het nemen van beslissingen.</textarea>
+            </div>
+            <div class="question-connector">
+              <div class="question-connector-line"></div>
+              <div class="question-connector-icon">⟷</div>
+              <div class="question-connector-line"></div>
+            </div>
+            <div class="question-pole right">
+              <div class="question-pole-label right">
+                <span class="pole-icon right">✓</span>
+                Wel-vraag
+              </div>
+              <textarea rows="2" placeholder="Voer de positieve formulering in..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categorie 2: Vragen -->
+    <div class="section-block teal">
+      <div class="section-block-header">
+        <div class="section-block-icon teal">🛡️</div>
+        <div>
+          <div class="section-block-title">Risicobeheersing</div>
+          <div class="section-block-subtitle">4 competenties · <span style="color: var(--warning); font-weight: 600;">2/4 vragen compleet</span></div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-header-name">Preventief handelen</span>
+          <span class="qcard-status complete">✓ Compleet</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-poles">
+            <div class="question-pole left">
+              <div class="question-pole-label left">
+                <span class="pole-icon left">✗</span>
+                Niet-vraag
+              </div>
+              <textarea rows="2">Ik reageer pas op problemen als ze zich voordoen, zonder preventieve maatregelen.</textarea>
+            </div>
+            <div class="question-connector">
+              <div class="question-connector-line"></div>
+              <div class="question-connector-icon">⟷</div>
+              <div class="question-connector-line"></div>
+            </div>
+            <div class="question-pole right">
+              <div class="question-pole-label right">
+                <span class="pole-icon right">✓</span>
+                Wel-vraag
+              </div>
+              <textarea rows="2">Ik neem proactief preventieve maatregelen om risico's te beperken voordat ze zich voordoen.</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-nav">
+      <button class="outline">← Terug</button>
+      <button class="primary">Volgende: Review →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mockup-sep">Stap 4: Review</div>
+  <!-- ════════════════════════════════════════════════════════════ -->
+
+  <div class="panel" style="margin-top: 24px;">
+    <div class="panel-header">
+      <h2>Review & Publiceren</h2>
+    </div>
+
+    <!-- Assessment info review -->
+    <div class="section-block blue">
+      <div class="section-block-header">
+        <div class="section-block-icon blue">📝</div>
+        <div>
+          <div class="section-block-title">Assessment informatie</div>
+          <div class="section-block-subtitle">Naam, beschrijving en instructie</div>
+        </div>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Naam (NL)</span>
+        <span class="review-field-value">ORM Assessment</span>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Naam (EN)</span>
+        <span class="review-field-value">ORM Assessment</span>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Beschrijving</span>
+        <span class="review-field-value">Dit assessment meet organisatie-risico management...</span>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Instructie</span>
+        <span class="review-field-value">Beoordeel elke stelling op een schaal van 1 tot 5...</span>
+      </div>
+      <div class="review-field" style="border-bottom: none;">
+        <span class="review-field-label">Groepen</span>
+        <span class="review-field-value">
+          <div class="group-chips" style="justify-content: flex-end;">
+            <span class="group-chip" style="font-size: 12px; padding: 4px 10px;">HR Professionals</span>
+            <span class="group-chip" style="font-size: 12px; padding: 4px 10px;">Management Team</span>
+          </div>
+        </span>
+      </div>
+    </div>
+
+    <!-- Structuur review -->
+    <div class="section-block green">
+      <div class="section-block-header">
+        <div class="section-block-icon green">🏗️</div>
+        <div>
+          <div class="section-block-title">Structuur</div>
+          <div class="section-block-subtitle">Categorieën, competenties en vragen</div>
+        </div>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Categorieën</span>
+        <span class="review-field-value">3</span>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Competenties</span>
+        <span class="review-field-value">12</span>
+      </div>
+      <div class="review-field">
+        <span class="review-field-label">Vragen</span>
+        <span class="review-field-value">24</span>
+      </div>
+      <div class="review-field" style="border-bottom: none;">
+        <span class="review-field-label">Vertalingen</span>
+        <span class="review-field-value" style="color: var(--success);">✓ Alles vertaald (NL + EN)</span>
+      </div>
+    </div>
+
+    <!-- Publicatie -->
+    <div class="section-block purple">
+      <div class="section-block-header">
+        <div class="section-block-icon purple">🚀</div>
+        <div>
+          <div class="section-block-title">Publicatie</div>
+          <div class="section-block-subtitle">Klaar om te publiceren</div>
+        </div>
+      </div>
+      <div style="text-align: center; padding: 8px 0;">
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">
+          Gebruik de <strong>Publish</strong> knop in de header om het assessment te publiceren.
+        </p>
+        <button class="outline" style="margin-top: 4px;">XML Preview bekijken</button>
+      </div>
+    </div>
+
+    <div class="footer-nav">
+      <button class="outline">← Terug</button>
+      <div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
