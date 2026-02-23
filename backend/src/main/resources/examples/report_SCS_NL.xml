@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<report title="Sociale communicatiestijlen">
+	<section
+		title="Inleiding voor uw sociale communicatiestijl">
+		<p>
+			Beste {{name}},
+			</p><p>&#160;</p><p>
+			Dit rapport geeft u inzicht op uw Sociale communicatie stijl. Een uitgangspunt hierbij is dat uw "succes" in relatie tot anderen in belangrijke mate wordt bepaald door de "perceptie" die zij hebben van de manier waarop u op hen overkomt. Uw Sociale stijl wordt bepaald door een drietal aspecten: uw Communicatiestijl, uw Empathie en uw Flexibiliteit. Hieronder vindt u de uitleg wat met deze drie aspecten wordt bedoeld.
+			</p><p>&#160;</p><p>
+			1.  Uw Communicatiestijl geeft aan hoe u in uw communicatie overkomt op anderen, zowel verbaal als non-verbaal. Hij geeft enerzijds aan hoe u communiceert, maar ook waar u in de inhoud nadruk op legt. De mensen die over u vragenformulieren hebben ingevuld, hebben aangegeven in welke mate de verschillende gedragingen bij u worden waargenomen. Door middel van de antwoorden is een rapport opgesteld waarbij wordt gepresenteerd welke communicatiestijl het meest bij u wordt waargenomen. De 4 stijlen worden samengesteld door de mate van dominant versus meegaand gedrag, anderzijds op expansief versus terughoudend gedrag (emotie). De vier hoofdstijlen die te onderscheiden zijn: de Promotende, Faciliterende, Controlerende en Analyserende stijl.
+			</p><p>&#160;</p><p>
+			2.  Uw Empathie is de mate waarin u begrip toont. Empathie kan worden gedefinieerd als de bekwaamheid om aan een gesprekspartner te laten merken dat u zijn/haar gevoelens begrijpt en met hem/haar meeleeft. In uw feedback is gekozen voor vier mogelijke empathieniveaus. Uw uitslag kan oplopen van niveau een tot en met vier. Hoe hoger de score hoe meer begrip u toont. Deze uitslag is een gemiddelde van wat de mensen over u op de vragenformulieren hebben ingevuld.
+			</p><p>&#160;</p><p>
+			3.  Uw Flexibiliteit is de mate waarin u toont de behoeften van anderen als even belangrijk te zien als de eigen behoefte. Ook de mate waarin u de bereidheid toont open te staan voor verandering, bepaalt uw flexibiliteit. In uw feedback is gekozen voor vier mogelijke flexibiliteitsniveaus. Uw uitslag kan oplopen van een tot en met vier. Hoe hoger de score hoe flexibeler u overkomt. Deze uitslag is een gemiddelde van wat de mensen over u op de vragenformulieren hebben ingevuld.
+			</p><p>&#160;</p><p>
+			Het rapport is tot stand gekomen op basis van de verwerkte vragenformulieren. Dit betekent dat niet iedereen u exact op dezelfde manier ervaart. Ook kan het zijn dat uw zelfbeeld in enige mate afwijkt van de uitslag. De onderstaande uitslag beschrijft hoe u overkomt op anderen en niet hoe u bent. Er is geen goede of slechte stijl, ook komen bepaalde stijlen niet vaker voor in bepaalde functies.
+			</p><p>
+			Stel uzelf tijdens het lezen steeds de vraag: welke mogelijke consequenties hebben mijn stijl, empathie en flexibiliteit voor mijn interpersoonlijke relatie met anderen?
+			</p><p>&#160;</p><p>
+			Hartelijke groeten,
+			</p><p>&#160;</p><p>
+			Gerard Dekkers
+			</p><p>
+			Directeur Metro Mentoring Platform
+		</p>
+	</section>
+	<section title="Overzicht van de scores">
+		<graph type="bar" questions="1.|2.|3.|4.|5.|6."
+			labels="Promotend|Faciliterend|Controlerend|Analytisch|Empathie|Flexibiliteit" />
+
+		<graph type="spider" title="Overzicht gebieden"
+			questions="5.|2.|4.|6.|3.|1." min="6" max="8"
+			labels="Empathie|Faciliterend|Analytisch|Flexibiliteit|Controlerend|Promotend" />
+
+		<graph type="spider" title="Overzicht sociale communicatiestijlen"
+			questions="1.|2.|4.|3." min="6" max="8"
+			labels="Promotend|Faciliterend|Analytisch|Controlerend" />
+
+		<graph type="bar" title="Mijn score versus wat anderen vinden"
+			questions="1.|2.|3.|4.|5.|6."
+			labels="Promotend|Faciliterend|Controlerend|Analytisch|Empathie|Flexibiliteit"
+			groupBy="0" groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+
+		<graph type="table" title="Mijn score versus wat anderen vinden"
+			questions="1.|2.|3.|4.|5.|6."
+			labels="Promotend|Faciliterend|Controlerend|Analytisch|Empathie|Flexibiliteit"
+			groupBy="0" groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+	<section title="Promotende stijl">
+		<p>
+			De promotende sociale communicatiestijl wordt gezien als iemand met een aanvallende stijl, die in interpersoonlijke relaties graag de competitie aangaat. Hij/zij wordt als assertief ervaren, waarbij hij/zij probeert het maximale uit een project of henzelf te halen. Anderen zien hen als sociaal vaardig waarbij zij, in combinatie met uw assertiviteit, goed zijn in om hun ideeën of henzelf te "verkopen". Ook besteden zij veel tijd aan het stimuleren van anderen.
+			</p><p>&#160;</p><p>
+			De persoonlijke waarde wordt afgemeten door de mate waarin hij/zij erkenning en applaus krijgt van anderen. Hierbij beoordeelt hij/zij anderen op hun vermogen hen snel aan te voelen, te begrijpen en naargelang hun interesse in hun nieuwe ideeën. In contact met anderen zullen zij vooral de voor hun levendige, interessante mensen en hun gevoelens als uitgangspunt nemen in de communicatie. Tijdens gesprekken kan hij/zij vrij ongestructureerd te werk gaan en is de factor tijd niet dwingend. Hierbij toont hij/zij veelal een levendig voorstellingsvermogen en geeft de voorkeur aan besprekingen die over het totaalbeeld gaan. In gesprekken met anderen komt hij/zij energiek over en houdt dit directe contact langdurig vol. Interesses zijn vooral gericht op de toekomst waarin hij/zij persoonlijke ambities wilt realiseren. Anderen kunnen in hen een plezierig klankbord vinden om over hun ideeën te spreken.
+			</p><p>&#160;</p><p>
+			De oriëntatie is vooral gericht op henzelf. Hierdoor worden zij ervaren als goede leiders die in de groep anderen graag inspireren en enthousiasmeren. Ook indien zijzelf begeleid worden, doen zij dit graag door te sparren waarbij de confrontatie niet wordt geschuwd. In het begeleiden geeft hij/zij er de voorkeur aan met anderen met name het "wie" van hun ideeën of meningen te bespreken. Bij het nemen van besluiten houdt hij/zij van nieuwe uitdagingen en houdt rekening met welke consequenties dit heeft voor henzelf en hun ambities. Dit maakt dat deze stijl op anderen over kan komen als iemand die snel en risicovolle beslissingen neemt. Indien zij de communicatie en samenwerking met anderen, ook in hun eigen belang, wilt verbeteren, zullen zij naast de sterke punten nog kunnen groeien in het bespreken en tonen van hun voorbereiding.
+			</p><p>
+			Meer beheren, plannen en rust in contact met anderen zullen zeker in hun voordeel uitpakken. Ook kunnen zij zich meer focussen op belangen van anderen en hun behoeften. Denk hierbij aan een meer taakgerichte aanpak waarbij minder vluchtige beloftes gedaan worden en afgemaakt wordt waar aan begonnen is.
+			</p><p>&#160;</p><p>
+			Voor wat betreft de vaardigheid in het opbouwen van vertrouwen is openheid, en gevoelens uitspreken het sterkste punt. Het zwakkere punt in het opbouwen van vertrouwen is betrouwbaarheid. Om betrouwbaarheid te tonen zou deze stijl ideeën feitelijk moeten onderbouwen, waarbij inhoudelijk uitgelegd wordt waar de ideeën op gebaseerd zijn. Daarnaast kunnen zij zich mogelijk meer richten op de specifieke taken en de voor henzelf geldende deadlines dan op andere mensen in hun directe omgeving.
+			</p><p>&#160;</p><p>
+			Promotende stijl bestaat uit:
+		</p>
+		<list>
+			<p>1.1 Status</p>
+			<p>1.2 Enthousiast</p>
+			<p>1.3 Spontaan</p>
+			<p>1.4 Stimulerend</p>
+			<p>1.5 Energiek</p>
+			<p>1.6 Toekomstgericht</p>
+			<p>1.7 Verbaal</p>
+			<p>1.8 Sociaal</p>
+			<p>1.9 Persoonlijke erkenning</p>
+			<p>1.10 Opgewekt</p>
+			<p>1.11 Chaotisch</p>
+			<p>1.12 Geeft eigen mening</p>
+			<p>1.13 Werkt op eigen manier</p>
+			<p>1.14 Extravert</p>
+			<p>1.15 Reageert intuitief</p>
+			<p>1.16 Innovatief</p>
+			<p>1.17 Origineel</p>
+			<p>1.18 Creatief</p>
+			<p>1.19 Ideeën uiten</p>
+		</list>
+		<graph type="bar" title="Gemiddelde score per vraag"
+			questions="1.1.|1.2.|1.3.|1.4.|1.5.|1.6.|1.7.|1.8.|1.9.|1.10.|1.11.|1.12.|1.13.|1.14.|1.15.|1.16.|1.17.|1.18.|1.19." />
+		<graph type="bar" title="Gemiddelde score per vraag per respondentengroep"
+			questions="1.1.|1.2.|1.3.|1.4.|1.5.|1.6.|1.7.|1.8.|1.9.|1.10.|1.11.|1.12.|1.13.|1.14.|1.15.|1.16.|1.17.|1.18.|1.19." groupBy="0"
+			groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+	<section title="Faciliterende stijl">
+		<p>
+			De faciliterende sociale communicatiestijl wordt gezien als iemand met een inschikkelijke stijl die anderen accepteert zoals zij zijn en moeite doet om door hen geaccepteerd te worden. Hij/zij besteedt veel tijd aan het onderhouden van de relatie. Hierbij wordt de tijd genomen om vooral ook aangenaam te zijn voor de ander. Deze stijl meet de persoonlijke waarde door de mate waarin aandacht wordt geschonken aan anderen. Hierbij beoordeelt hij/zij hen op hun vermogen henzelf en anderen te begrijpen, naargelang hun emotionele warmte. In contact met anderen zal vooral de relatie met hen en hun gevoelens als uitgangspunt genomen worden in de communicatie. Tijdens hun gesprekken is de factor tijd niet dwingend. Hierbij geeft hij/zij de voorkeur aan eerder informele besprekingen die mogelijk lang kunnen duren. In gesprek met meerdere mensen worden zij ervaren als personen die voor eenieder tijd neemt, waarbij hij/zij luistert naar anderen en in zaken vanuit het verleden, het heden en ideeën in de toekomst. Anderen kunnen in hen een nuttig klankbord vinden om over hun ideeën en problemen te spreken.
+			</p><p>&#160;</p><p>
+			De oriëntatie van deze stijl is vooral gericht op mensen. Hierdoor worden zij ervaren als goede teamspelers die in de groep anderen graag coachen of suggesties aan de hand doen. Ook indien zij zelf begeleid worden, zien zij dit graag in de vorm van het over en weer aandragen en bespreken van suggesties. In het begeleiden wordt de voorkeur gegeven aan met anderen met name het "waarom, van hun ideeën of meningen te bespreken. Bij het nemen van besluiten zijn zij liever een van de groep en houden rekening met welke consequenties dit heeft voor de groep waar mogelijk zelf deel van uit gemaakt wordt. Dit maakt dat op anderen zijn overkomen als iemand die soms te nadrukkelijk rekening houdt met de ander, aarzelt tijdens het nemen van beslissingen of zelf als besluiteloos wordt gezien.
+			</p><p>&#160;</p><p>
+			Indien zij hun communicatie en samenwerking ook in hun eigen belang willen verbeteren, zal deze stijl naast hun sterke punten nog kunnen groeien in het initiatief nemen en richting geven aan anderen. Ook kunnen zij zich meer focussen op hun eigen persoonlijke doelen en meer hun eigen tijd plannen. Voor wat betreft hun vaardigheid in het opbouwen van vertrouwen is acceptatie, de ander in zijn/haar waarde laten, hun sterkste punt. Het zwakke punt in het opbouwen van vertrouwen is congruentie. Om congruentie te tonen kunnen zijn hun mening onomwonden uitspreken. Ook wat vaker nee zeggen kan een mogelijkheid zijn. Daarnaast kunnen zij zich mogelijk meer richten op de taken en de voor henzelf geldende doelstellingen dan op andere mensen in hun directe omgeving.
+			</p><p>&#160;</p><p>
+			Faciliterende stijl bestaat uit:
+		</p>
+		<list>
+			<p>2.1 Harmonie</p>
+			<p>2.2 Helpt graag</p>
+			<p>2.3 Goede relaties</p>
+			<p>2.4 Vriendelijk</p>
+			<p>2.5 Kwetsbaar voor kritiek</p>
+			<p>2.6 Relatiegericht</p>
+			<p>2.7 Mijdt conflicten</p>
+			<p>2.8 Voorzichtig met andermans gevoelens</p>
+			<p>2.9 Zoekt groep op</p>
+			<p>2.10 Aanvaarding door anderen</p>
+			<p>2.11 Attent</p>
+			<p>2.12 Mensgericht</p>
+			<p>2.13 Praat over gevoelens</p>
+			<p>2.14 Uitleggen</p>
+			<p>2.15 Gevoelig voor advies</p>
+			<p>2.16 Samenwerkend</p>
+			<p>2.17 Onderhoudt relaties</p>
+			<p>2.18 Democratisch</p>
+			<p>2.19 Coöperatief</p>
+			<p>2.20 Hulpvaardig</p>
+			<p>2.21 Vraagt om mening</p>
+		</list>
+		<graph type="bar" title="Gemiddelde score per vraag"
+			questions="2.1.|2.2.|2.3.|2.4.|2.5.|2.6.|2.7.|2.8.|2.9.|2.10.|2.11.|2.12.|2.13.|2.14.|2.15.|2.16.|2.17.|2.18.|2.19.|2.20.|2.21." />
+		<graph type="bar" title="Gemiddelde score per vraag per respondentengroep"
+			questions="2.1.|2.2.|2.3.|2.4.|2.5.|2.6.|2.7.|2.8.|2.9.|2.10.|2.11.|2.12.|2.13.|2.14.|2.15.|2.16.|2.17.|2.18.|2.19.|2.20.|2.21." groupBy="0"
+			groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+	<section title="Controlerende stijl">
+		<p>
+			Een controlerende communicatie stijl wordt gezien als iemand met een autocratische stijl waarbij deze zeer nadrukkelijk is in het nastreven van realisaties. Deze stijl komt op anderen over als erg direct en prestatiegericht. Sterke gerichtheid op eigen resultaten, en iemand die zijn eigen structuren en werkzaamheden wil bepalen en uitvoeren. Dit betekent dat hij/zij weinig in de opdrachtgevende sfeer spreekt en in de beleving van anderen sterk vasthoudt aan eigen doelstellingen. In handelen steunt hij/zij vaak op de eigen prestaties en wat zelf is bereikt. In onderhandelingen kan zeer goed met druk worden om gegaan. Deze stijl bepaald graag de zakelijk regels en reglementen, en zullen anderen daaraan houden in het nemen van beslissingen. Hij/zij komt erg stabiel, soms streng over en toont sterk te geloven in zichzelf en zijn/haar doelstellingen.
+			</p><p>&#160;</p><p>
+			De controlerende stijl meet persoonlijke waarde door de mate waarin prestaties geleverd worden door eigen handelen. Hierbij beoordeelt hij/zij anderen op hun vermogen hem/haar snel te begrijpen en zelfstandig uitvoering te geven aan hun advies. In contact met anderen zal  vooral het realiseren van doelstellingen het uitgangspunt zijn in hun communicatie. Tijdens gesprekken is een nuttige tijdbesteding een belangrijke  factor.
+			</p><p>
+			Er is de neiging om weinig te zeggen, behalve op het eigen vakgebied, en tevens de neiging anderen te vertellen wat te doen. In hun  communicatie met anderen is hij/zij formeel en direct.  De interesse is vooral gericht op zaken in het heden, waarbij hij/zij open staat voor ervaringen die nog sneller tot resultaten leiden. Anderen vinden in hem/haar een direct klankbord om over actuele, zakelijke ideeën te spreken.
+			</p><p>&#160;</p><p>
+			De oriëntatie is gericht op uw taken en het werk. Hierdoor kan hij/zij gezien worden als iemand die liever alleen dan samen met anderen werkt of alleen tijd voor hen vrijmaakt als het moet. Indien aan een taak begonnen, maakt hij/zij ondanks eventuele druk van buiten gewetensvol het werk af. Hierbij wordt het gehele project concreet gecontroleerd. Doordat aan veel zaken aandacht besteedt wordt en daarbinnen kordaat gehandeld en beslissingen genomen, ervaren anderen deze stijl binnen zijn/haar vakgebied als professioneel. Ook indien hij/zij begeleid wordt, ziet hij/zij dit graag in de vorm van kort en concreet de belangrijkste zaken doorspreken, actie ondernemen en tot resultaat brengen. In het begeleiden van anderen wordt er de voorkeur aan gegeven alleen het "wat" te bespreken.
+			</p><p>&#160;</p><p>
+			Beslissingen worden zelfstandig genomen en geconcentreerd op de gestelde doelen. Dit maakt dat op anderen overgekomen kan worden als iemand die solistisch en direct beslist, en daardoor nauwelijks rekening houdt met anderen of hun gevoelens. Indien hij/zij de communicatie en samenwerking met anderen wilt verbeteren, zal hij/zij naast de sterke punten nog kunnen groeien door wat minder solistisch te werk te gaan en meer te luisteren naar anderen. Ook realistischer te zijn in wat van anderen wel en niet te verwachten is. Indien hij/zij zich realiseert dat niet iedereen een beslisser is en/of zelfstandig wil of kan werken, zal het helpen meer begrip te tonen voor de kwaliteiten van anderen.
+			</p><p>&#160;</p><p>
+			Voor wat betreft de vaardigheid in het opbouwen van vertrouwen is congruentie, zeggen wat hij/zij denkt, het sterkste punt. Het meest zwakke punt in het opbouwen van vertrouwen is acceptatie. Om acceptatie te tonen hij/zij zich onvoorwaardelijk open moeten stellen voor de gevoelens van anderen. Ook onvoorwaardelijk luisteren naar meningen van anderen en wat zij te vertellen hebben, zal naast nuttig zeker ook leerzaam zijn.
+			</p><p>&#160;</p><p>
+			Controlerende stijl bestaat uit:
+		</p>
+		<list>
+			<p>3.1 Efficiënt</p>
+			<p>3.2 Resultaten behalen</p>
+			<p>3.3 Prestatie</p>
+			<p>3.4 Controle</p>
+			<p>3.5 Standvastig</p>
+			<p>3.6 Veeleisend</p>
+			<p>3.7 Formeel</p>
+			<p>3.8 Gericht op het heden</p>
+			<p>3.9 Direct</p>
+			<p>3.10 Winnend</p>
+			<p>3.11 Snel rendement</p>
+			<p>3.12 Geld georiënteerd</p>
+			<p>3.13 Tijdsbewust</p>
+			<p>3.14 Geeft opdrachten</p>
+			<p>3.15 Zakelijk</p>
+			<p>3.16 Besluit vastberaden</p>
+			<p>3.17 Discipline in handelen</p>
+			<p>3.18 Altijd bezig</p>
+			<p>3.19 Zelfstandig</p>
+			<p>3.20 Taakgericht</p>
+			<p>3.21 Praat over werken</p>
+			<p>3.22 Onderbreken</p>
+		</list>
+		<graph type="bar" title="Gemiddelde score per vraag"
+			questions="3.1.|3.2.|3.3.|3.4.|3.5.|3.6.|3.7.|3.8.|3.9.|3.10.|3.11.|3.12.|3.13.|3.14.|3.15.|3.16.|3.17.|3.18.|3.19.|3.20.|3.21.|3.22." />
+		<graph type="bar" title="Gemiddelde score per vraag per respondentengroep"
+			questions="3.1.|3.2.|3.3.|3.4.|3.5.|3.6.|3.7.|3.8.|3.9.|3.10.|3.11.|3.12.|3.13.|3.14.|3.15.|3.16.|3.17.|3.18.|3.19.|3.20.|3.21.|3.22." groupBy="0"
+			groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+	<section title="Analyserende stijl">
+		<p>
+			De analyserende sociale communicatiestijl wordt gezien als iemand met een vermijdende stijl die in veel situatie eerst graag de kat uit de boom kijkt. Hij/zij wordt als erg terughoudend ervaren, iemand die veel informatie wil en aan eigen kennis zekerheden ontleent. Er wordt veel tijd besteed aan het informeren en analyseren van zaken en hij/zij komt over als iemand die graag wil dat zaken kloppen en accuraat zijn. Ook ervaren anderen hem/haar als zeer rustig en weloverwogen.
+			</p><p>&#160;</p><p>
+			Hij/zij meet persoonlijke waarde door de activiteiten zelf. Hierbij heeft deze stijl de neiging op detailniveau werkzaamheden te verrichten. In communicatie met anderen ervaren zij dat hij/zij veel vragen stelt en mogelijk vooraf bewijs moeten leveren of hun ideeën valide zijn. Hierbij beoordeelt hij/zij anderen op hun vermogen hun redenering te begrijpen en naargelang hun ervaring op het betreffende vakgebied. In contact met anderen is kennis en ervaring het uitgangspunt in communicatie met anderen. Tijdens gesprekken is de factor tijd voor hen mogelijk een aanleiding voor druk, zeker als anderen hen niet begrijpen of niet ter zake doende vragen stellen. In de gesprekken wordt hij/zij ervaren als iemand die naast de zakelijke hiërarchische relatie, vooral tijd wil besteden aan details die nodig zijn om het werk correct te plannen en uit te voeren. Ook wordt hij/zij ervaren als iemand die zaken goed gedocumenteerd en uitgelegd wil hebben. In een groep wordt hij/zij ervaren als iemand die een positieve bijdrage levert, doordat zaken zeer objectief, logisch en stapsgewijs benadert worden en anderen hierdoor inhoudelijk maximaal ondersteund worden. De interesses zijn vooral gericht op het verleden waar in communicatie mogelijk nadrukkelijk op terug wordt gevallen. Anderen ervaren hen als iemand die liever alleen werkt en gevraagde hulp waardeert.
+			</p><p>&#160;</p><p>
+			De oriëntatie is gericht op uw eigen taken en werkzaamheden. Hierdoor ervaren anderen hen mogelijk als afstandelijk en rationeel. Anderen zien in hem iemand die anderen wil begeleiden door hen iets te leren of door hen gedetailleerd zaken "voor' te doen. Ook indien hij/zij zelf begeleid wordt, ziet hij/zij dit graag in de vorm bewijzen en inhoudelijke uitleg. In het begeleiden geeft hij/zij er de voorkeur aan met anderen met name het "hoe" te bespreken. Bij het nemen van besluiten wordt hij/zij ervaren als iemand die alle alternatieven onderzoekt, waarbij aan eigen ervaringen de voorkeur wordt gegeven. Ook besluiten zij sterk vanuit de risicoanalyse. Dit maakt dat hij/zij op anderen over kunnen komen als iemand die zeer doordacht en terughoudend besluit en daardoor mogelijk als besluiteloos wordt ervaren. Hierbij zien mensen hen als iemand die, eenmaal besloten, zich ook principieel aan de gemaakte afspraken houdt. Hierdoor weten anderen wat zij aan hem/haar heeft.
+			</p><p>&#160;</p><p>
+			Indien zij de communicatie en samenwerking met anderen ook in hun eigen belang willen verbeteren, zullen zij naast hun sterke punten ook nog kunnen groeien door op gevoel risico's te nemen. Ook wat meer initiatief nemen in contact met anderen zal in de samenwerking zeker helpen.
+			</p><p>
+			Minder hangen aan zekerheden, besluiten nemen en accepteren dat niet alles perfect hoeft te zijn, zal in resulteren om in communicatie rustiger over te komen. Ook zal hij/zij hierdoor zelf wat minder plichtmatig handelen. Voor wat betreft de vaardigheid in het opbouwen van vertrouwen is betrouwbaarheid, afspraken nakomen, het sterkste punt. Het meest zwakke punt in het opbouwen van vertrouwen is openheid. Om openheid te tonen zou hij/zij zich onvoorwaardelijk open moeten stellen voor de ideeën van anderen zonder, deze te willen controleren of corrigeren. Ook willen accepteren dat ongelijk hebben nog niet betekent dat hij/zij gezichtsverlies lijdt.
+			</p><p>&#160;</p><p>
+			Analyserende stijl bestaat uit:
+		</p>
+		<list>
+			<p>4.1 Zekerheid</p>
+			<p>4.2 Betrouwbaarheid</p>
+			<p>4.3 Procedures</p>
+			<p>4.4 Details</p>
+			<p>4.5 Punctueel</p>
+			<p>4.6 Systematisch</p>
+			<p>4.7 Specifiek</p>
+			<p>4.8 Methodisch</p>
+			<p>4.9 Risicomijddend</p>
+			<p>4.10 Verzameld informatie</p>
+			<p>4.11 Geduldig</p>
+			<p>4.12 Wacht af</p>
+			<p>4.13 Serieus</p>
+			<p>4.14 Besluit voorzichtig</p>
+			<p>4.15 Rationeel</p>
+			<p>4.16 Praat over feiten</p>
+			<p>4.17 Reageert beredenerend</p>
+			<p>4.18 Introvert</p>
+			<p>4.19 Praat weinig</p>
+		</list>
+		<graph type="bar" title="Gemiddelde score per vraag"
+			questions="4.1.|4.2.|4.3.|4.4.|4.5.|4.6.|4.7.|4.8.|4.9.|4.10.|4.11.|4.12.|4.13.|4.14.|4.15.|4.16.|4.17.|4.18.|4.19." />
+		<graph type="bar" title="Gemiddelde score per vraag per respondentengroep"
+			questions="4.1.|4.2.|4.3.|4.4.|4.5.|4.6.|4.7.|4.8.|4.9.|4.10.|4.11.|4.12.|4.13.|4.14.|4.15.|4.16.|4.17.|4.18.|4.19." groupBy="0"
+			groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+	<section title="Empathie">
+		<p>
+			Empathie is een ander woord voor inlevingsvermogen: de vaardigheid van iemand om zich in te leven of te verplaatsen in de gevoelens van anderen. Empathie kan worden gedefinieerd als de bekwaamheid om aan uw gesprekspartner te laten merken dat u zijn/haar gevoelens begrijpt en met hem/haar meeleeft. Uw empathie is de mate waarin u dit toont. Onder empathie wordt hier ook verstaan, zowel het kunnen aanvoelen van andermans gevoelens en dit tegelijkertijd kunnen uiten. Dit kan op het emotionele vlak zoals frustraties, vreugde, verlangens, maar ook op het rationele vlak zoals begrijpen, opinies en bezorgdheden. Empathie is ook zaken en emoties vanuit het perspectief van de ander onderkennen en erkennen.
+			</p><p>&#160;</p><p>
+			"Begrip voor andermans gevoelens en meningen" wil helemaal niet zeggen dat u daarmee akkoord gaat of emotioneel betrokken bent. U kunt mogelijk uw eigen gevoelens goed scheiden van die van de ander en toch empathie tonen. Indien u empathie toont, wordt u over het algemeen ervaren als iemand die oprecht geïnteresseerd is de ander te leren kennen, goed kan luisteren, niet alleen naar de inhoud maar ook naar de gevoelens daarbij.
+			</p><p>
+			Indien u empathisch overkomt wordt u ervaren als betrokken en betrouwbaar. Uw gesprekspartner zal zich meer op zijn/haar gemak voelen. Hierdoor zal de  communicatie effectiever verlopen, worden uitgangspunten gedeeld, zullen conflicten niet escaleren en worden beslissingen sneller genomen. Indien u minder empatisch overkomt wordt u eerder ervaren als iemand die meer op zichzelf gericht is.
+		</p><p>&#160;</p><p>
+			Empathie bestaat uit:
+		</p>
+		<list>
+			<p>5.1 Betrouwbaar</p>
+			<p>5.2 Aandachtig voor anderen</p>
+			<p>5.3 Geinteresseerd</p>
+			<p>5.4 Subtiel</p>
+			<p>5.5 Betrokken</p>
+			<p>5.6 Geruststellend</p>
+			<p>5.7 Toegankelijk</p>
+			<p>5.8 Zorgzaam</p>
+			<p>5.9 Toont begrip</p>
+		</list>
+		<graph type="bar" title="Gemiddelde score per vraag"
+			questions="5.1.|5.2.|5.3.|5.4.|5.5.|5.6.|5.7.|5.8.|5.9." />
+		<graph type="bar" title="Gemiddelde score per vraag per respondentengroep"
+			questions="5.1.|5.2.|5.3.|5.4.|5.5.|5.6.|5.7.|5.8.|5.9." groupBy="0"
+			groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+	<section title="Flexibiliteit">
+		<p>
+			Flexibiliteit is de mate waarin u zich in uw gedrag aanpast aan de stijl (de behoeften) van uw gesprekspartner en/of de situatie waarin u zich bevindt. Waarin u zich, in uw gedrag aanpast, wordt door anderen ervaren door de onderstaande gedragingen:
+			</p><p>&#160;</p><p>
+			- Open staan voor veranderingen of meningen van de ander.</p><p>
+			- De bereidheid tonen een interpersoonlijk compromis te willen sluiten.</p><p>
+			- Bereid zijn uitgangspunten te delen in plaats van een standpunt te verdedigen.</p><p>
+			- Redelijk zijn in het waarderen van de argumenten van de ander.</p><p>
+			- Anderen onvoorwaardelijk tegemoet komen in hun belangen.</p><p>
+			- Ruime opvatting tonen in verschillende en nieuwe zaken.</p><p>
+			- De bereidheid tonen de eigen stijl voor de duur van het gesprek los te laten en de ander tegemoet te komen in zijn/haar stijl.
+			</p><p>&#160;</p><p>
+			Flexibiliteit vraagt goed ontwikkelde sociale vaardigheden. Juist uw flexibiliteit bepaalt in hoeverre u het vertrouwen weet te winnen van uw gesprekspartner en daarmee ook de bereidheid van de ander u te ondersteunen in uw belang. Mensen met een hoge mate van flexibiliteit worden door anderen gezien als "probleemoplosser", als mensen die een win/win-situatie nastreven.
+			</p><p>&#160;</p><p>
+			Elke communicatiestijl kan op ieder niveau van flexibiliteit presteren. Flexibiliteit betekent zeker niet dat u uw principes laat varen. Het is de wijze waarop u deze principes uitdrukt en uitvoert. Dit is mede bepalend voor uw succes in de omgang met anderen, zowel in uw werk- als in uw privé omgeving.
+			</p><p>&#160;</p><p>
+			Flexibiliteit bestaat uit:
+		</p>
+		<list>
+			<p>6.1 Inschikkelijk</p>
+			<p>6.2 Vergevingsgezind</p>
+			<p>6.3 Ruim van opvatting</p>
+			<p>6.4 Flexibel</p>
+			<p>6.5 Redelijk</p>
+			<p>6.6 Onbevooroordeeld</p>
+			<p>6.7 Aanpasbaar</p>
+			<p>6.8 Onderhandelbaar</p>
+			<p>6.9 Win win situatie</p>
+		</list>
+		<graph type="bar" title="Gemiddelde score per vraag"
+			questions="6.1.|6.2.|6.3.|6.4.|6.5.|6.6.|6.7.|6.8.|6.9." />
+		<graph type="bar" title="Gemiddelde score per vraag per respondentengroep"
+			questions="6.1.|6.2.|6.3.|6.4.|6.5.|6.6.|6.7.|6.8.|6.9." groupBy="0"
+			groups="1|2|3|4" groupLabels="Zelf|Collega's|Ouders|Leiding" />
+	</section>
+</report>

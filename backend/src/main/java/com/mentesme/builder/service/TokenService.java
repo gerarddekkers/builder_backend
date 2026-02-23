@@ -19,9 +19,9 @@ public class TokenService {
         this.authProperties = authProperties;
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         long expiresAt = Instant.now().plusSeconds(TOKEN_VALIDITY_HOURS * 3600).getEpochSecond();
-        String payload = username + ":" + expiresAt;
+        String payload = username + ":" + role + ":" + expiresAt;
         String signature = sign(payload);
         return Base64.getUrlEncoder().withoutPadding()
                 .encodeToString((payload + ":" + signature).getBytes(StandardCharsets.UTF_8));
@@ -34,12 +34,13 @@ public class TokenService {
         try {
             String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
             String[] parts = decoded.split(":");
-            if (parts.length != 3) {
+            if (parts.length != 4) {
                 return false;
             }
             String username = parts[0];
-            long expiresAt = Long.parseLong(parts[1]);
-            String signature = parts[2];
+            String role = parts[1];
+            long expiresAt = Long.parseLong(parts[2]);
+            String signature = parts[3];
 
             // Check expiration
             if (Instant.now().getEpochSecond() > expiresAt) {
@@ -47,10 +48,42 @@ public class TokenService {
             }
 
             // Verify signature
-            String expectedSignature = sign(username + ":" + expiresAt);
+            String expectedSignature = sign(username + ":" + role + ":" + expiresAt);
             return signature.equals(expectedSignature);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public String extractUsername(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+        try {
+            String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length != 4) {
+                return null;
+            }
+            return parts[0];
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String extractRole(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+        try {
+            String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
+            String[] parts = decoded.split(":");
+            if (parts.length != 4) {
+                return null;
+            }
+            return parts[1];
+        } catch (Exception e) {
+            return null;
         }
     }
 

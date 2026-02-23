@@ -9,8 +9,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,6 +36,7 @@ public class MetroDataSourceConfig {
         return new DataSourceProperties();
     }
 
+    @Primary
     @Bean(name = "metroDataSource")
     public DataSource metroDataSource(@Qualifier("metroDataSourceProperties") DataSourceProperties properties) {
         return properties.initializeDataSourceBuilder().build();
@@ -55,9 +58,17 @@ public class MetroDataSourceConfig {
             .build();
     }
 
+    // JPA transaction manager - used by Spring Data JPA repositories
     @Bean(name = "metroTransactionManager")
     public PlatformTransactionManager metroTransactionManager(
             @Qualifier("metroEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
+    }
+
+    // JDBC transaction manager - used by publish service for raw SQL operations
+    @Bean(name = "metroJdbcTransactionManager")
+    public PlatformTransactionManager metroJdbcTransactionManager(
+            @Qualifier("metroDataSource") DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
     }
 }

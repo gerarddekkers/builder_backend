@@ -2,10 +2,15 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
   jackson:
     serialization:
       indent_output: true
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: none
     properties:
@@ -16,19 +21,26 @@ builder:
   metro:
     enabled: true
     datasource:
-      url: jdbc:mysql://test-metro-db.cyi4arp1bouk.eu-west-1.rds.amazonaws.com:3306/metro?useSSL=true&requireSSL=true
-      username: mastermetro
-      password: DOQmUyfeuOQp3TIjr4NJ
+      url: ${BUILDER_METRO_URL:jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:metro}?useSSL=true&requireSSL=true}
+      username: ${BUILDER_METRO_USERNAME:${DB_USERNAME:mastermetro}}
+      password: ${BUILDER_METRO_PASSWORD:${DB_PASSWORD:}}
       driver-class-name: com.mysql.cj.jdbc.Driver
   google:
     apiKey: ${GOOGLE_API_KEY:}
+  metro-prod:
+    enabled: ${BUILDER_METRO_PROD_ENABLED:false}
+    datasource:
+      url: ${BUILDER_METRO_PROD_URL:}
+      username: ${BUILDER_METRO_PROD_USERNAME:}
+      password: ${BUILDER_METRO_PROD_PASSWORD:}
+      driver-class-name: com.mysql.cj.jdbc.Driver
   s3:
     enabled: ${BUILDER_S3_ENABLED:false}
     bucket: ${BUILDER_S3_BUCKET:metro-platform}
     region: ${BUILDER_S3_REGION:eu-west-1}
     prefix: ${BUILDER_S3_PREFIX:test}
   auth:
-    enabled: ${BUILDER_AUTH_ENABLED:false}
+    enabled: ${BUILDER_AUTH_ENABLED:true}
     username: ${BUILDER_AUTH_USER:tester}
     password: ${BUILDER_AUTH_PASSWORD:}
     tokenSecret: ${BUILDER_AUTH_TOKEN_SECRET:changeme-in-production}

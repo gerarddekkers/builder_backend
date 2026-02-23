@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = {"http://localhost:5173", "https://builder.mentes.me"})
+@CrossOrigin(origins = {"http://localhost:5173", "https://builder.mentes.me", "https://builder-prod.mentes.me"})
 public class BuilderController {
 
     private static final Logger log = LoggerFactory.getLogger(BuilderController.class);
@@ -81,6 +81,18 @@ public class BuilderController {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Group search (database)
+    // ─────────────────────────────────────────────────────────────
+
+    @GetMapping("/groups/search")
+    public List<GroupSearchResult> searchGroups(@RequestParam(value = "q", defaultValue = "") String query) {
+        if (query.isBlank()) {
+            return List.of();
+        }
+        return metroLookup.searchGroups(query);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Google Translation (NL → EN)
     // ─────────────────────────────────────────────────────────────
 
@@ -119,7 +131,7 @@ public class BuilderController {
     @ResponseStatus(HttpStatus.CREATED)
     public AssessmentBuildResponse buildAssessment(@Valid @RequestBody AssessmentBuildRequest request) {
         log.warn("DEPRECATED endpoint /api/assessments/build used. Please migrate to /api/questionnaires/publish.");
-        PublishResult result = publishService.publish(request);
+        PublishResult result = publishService.publish(request, PublishEnvironment.TEST);
         String message = String.format(
             "Assessment opgeslagen in Metro database (ID: %d).",
             result.questionnaireId()

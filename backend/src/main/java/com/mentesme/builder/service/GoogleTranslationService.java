@@ -48,7 +48,7 @@ public class GoogleTranslationService {
             payload.put("q", texts);
             payload.put("source", sourceLanguage);
             payload.put("target", targetLanguage);
-            payload.put("format", "text");
+            payload.put("format", "html");
 
             String body = objectMapper.writeValueAsString(payload);
             String url = "https://translation.googleapis.com/language/translate/v2?key=" + apiKey;

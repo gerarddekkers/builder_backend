@@ -45,7 +45,8 @@ public class AiTranslationService {
         }
 
         String systemPrompt = "You are a professional translator. Translate from " + sourceLanguage + " to " + targetLanguage +
-                ". Return ONLY a JSON array of strings in the same order. No extra text.";
+                ". IMPORTANT: Preserve all HTML tags and structure exactly. Only translate the text content between tags. " +
+                "Return ONLY a JSON array of strings in the same order. No extra text.";
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("model", model);

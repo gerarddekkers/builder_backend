@@ -5,8 +5,6 @@ import com.mentesme.builder.model.CompetenceInput;
 import com.mentesme.builder.model.IntegrationPreviewResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,89 +12,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class MetroIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(MetroIntegrationService.class);
 
-    private final AtomicLong competenceSequence;
-    private final AtomicLong categorySequence;
-    private final AtomicLong goalSequence;
-    private final AtomicLong questionnaireSequence;
-    private final AtomicLong itemSequence;
-    private final ObjectProvider<MetroLookupRepository> lookupRepositoryProvider;
-    private MetroLookupRepository lookupRepository;
-    private volatile String lookupError;
-
-    public MetroIntegrationService(
-            ObjectProvider<MetroLookupRepository> lookupRepositoryProvider,
-            @Value("${builder.integration.competenceStartId:2000}") long competenceStartId,
-            @Value("${builder.integration.categoryStartId:300}") long categoryStartId,
-            @Value("${builder.integration.goalStartId:300}") long goalStartId,
-            @Value("${builder.integration.questionnaireStartId:200}") long questionnaireStartId,
-            @Value("${builder.integration.itemStartId:5000}") long itemStartId
-    ) {
-        this.lookupRepositoryProvider = lookupRepositoryProvider;
-        this.lookupRepository = lookupRepositoryProvider.getIfAvailable();
-        long competenceSeed = resolveStartId(competenceStartId, "competences");
-        long categorySeed = resolveStartId(categoryStartId, "categories");
-        long goalSeed = resolveStartId(goalStartId, "goals");
-        long questionnaireSeed = resolveStartId(questionnaireStartId, "questionnaires");
-        long itemSeed = resolveStartId(itemStartId, "items");
-
-        this.competenceSequence = new AtomicLong(competenceSeed);
-        this.categorySequence = new AtomicLong(categorySeed);
-        this.goalSequence = new AtomicLong(goalSeed);
-        this.questionnaireSequence = new AtomicLong(questionnaireSeed);
-        this.itemSequence = new AtomicLong(itemSeed);
-
-    }
-
     /**
-     * Lazy-resolve lookupRepository als het bij constructie null was.
+     * Generate SQL statements for publishing an assessment to a Metro database.
+     * Uses the provided repository for lookups and fresh ID generation.
+     * All sequences are local to this call — no shared state between invocations.
      */
-    private MetroLookupRepository getLookupRepository() {
-        if (lookupRepository == null) {
-            lookupRepository = lookupRepositoryProvider.getIfAvailable();
+    public IntegrationPreviewResponse generatePreview(AssessmentBuildRequest request, MetroLookupRepository repo) {
+        // Validate all groups exist in target database (single query)
+        var missingGroups = repo.findMissingGroupIds(request.groupIds());
+        if (!missingGroups.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Group(s) with ID " + missingGroups + " do not exist in the target database.");
         }
-        return lookupRepository;
-    }
-
-    /**
-     * Herlaad sequence-waarden van de DB zodat we altijd boven MAX(id) zitten.
-     * Wordt aangeroepen aan het begin van elke generatePreview().
-     */
-    private void refreshSequences() {
-        MetroLookupRepository repo = getLookupRepository();
-        if (repo == null) {
-            return;
-        }
-        try {
-            long qMax  = repo.getMaxId("questionnaires");
-            long catMax = repo.getMaxId("categories");
-            long cMax  = repo.getMaxId("competences");
-            long gMax  = repo.getMaxId("goals");
-            long iMax  = repo.getMaxId("items");
-
-            questionnaireSequence.set(Math.max(questionnaireSequence.get(), qMax + 1));
-            categorySequence.set(Math.max(categorySequence.get(), catMax + 1));
-            competenceSequence.set(Math.max(competenceSequence.get(), cMax + 1));
-            goalSequence.set(Math.max(goalSequence.get(), gMax + 1));
-            itemSequence.set(Math.max(itemSequence.get(), iMax + 1));
-
-        } catch (Exception ex) {
-            log.warn("refreshSequences failed: {}", ex.getMessage());
-        }
-    }
-
-    public IntegrationPreviewResponse generatePreview(AssessmentBuildRequest request) {
-        // Herlaad sequences van DB zodat IDs altijd boven huidige MAX zitten
-        refreshSequences();
 
         List<String> sql = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
+
+        // Local sequences — all fetched in a single query
+        Map<String, Long> maxIds = repo.getAllMaxIds();
+        long questionnaireSeq = maxIds.get("questionnaires") + 1;
+        long categorySeq = maxIds.get("categories") + 1;
+        long competenceSeq = maxIds.get("competences") + 1;
+        long goalSeq = maxIds.get("goals") + 1;
+        long itemSeq = maxIds.get("items") + 1;
+        long cqSeq = maxIds.get("cq") + 1;
 
         Map<String, Long> categoryIds = new HashMap<>();
         Map<String, Long> goalIds = new HashMap<>();
@@ -104,17 +49,56 @@ public class MetroIntegrationService {
         String assessmentName = safeTrim(request.assessmentName());
         String truncatedName = truncate(assessmentName, 30, warnings);
 
-        // Reuse existing questionnaire if name already exists, otherwise create new
-        Long existingQuestionnaireId = lookupExistingQuestionnaireId(truncatedName);
+        // Determine questionnaire ID:
+        // 1. If editQuestionnaireId is set, always use that (even if name changed)
+        // 2. Otherwise, look up by name (existing re-publish behavior)
+        // 3. Otherwise, create new
+        Long existingQuestionnaireId;
+        if (request.editQuestionnaireId() != null) {
+            existingQuestionnaireId = request.editQuestionnaireId();
+        } else {
+            existingQuestionnaireId = repo.findQuestionnaireIdByName(truncatedName).orElse(null);
+        }
+
         long questionnaireId;
         if (existingQuestionnaireId != null) {
             questionnaireId = existingQuestionnaireId;
-            warnings.add("Questionnaire '" + truncatedName + "' bestaat al (ID: " + questionnaireId + "). Competenties en items worden toegevoegd.");
+
+            // Clean up old items linked to this questionnaire (cascade delete)
+            sql.add("DELETE it FROM item_translations it " +
+                    "INNER JOIN questionnaire_items qi ON qi.itemId = it.itemId " +
+                    "WHERE qi.questionnaireId = " + questionnaireId + ";");
+            sql.add("DELETE ci FROM competence_items ci " +
+                    "INNER JOIN questionnaire_items qi ON qi.itemId = ci.itemId " +
+                    "WHERE qi.questionnaireId = " + questionnaireId + ";");
+            sql.add("DELETE i FROM items i " +
+                    "INNER JOIN questionnaire_items qi ON qi.itemId = i.id " +
+                    "WHERE qi.questionnaireId = " + questionnaireId + ";");
+            sql.add("DELETE FROM questionnaire_items WHERE questionnaireId = " + questionnaireId + ";");
+            sql.add("DELETE FROM competence_questions WHERE questionnaireId = " + questionnaireId + ";");
+
+            // Clean up old group links for this questionnaire (will be re-inserted below)
+            sql.add("DELETE FROM group_questionnaires WHERE questionnaireId = " + questionnaireId + ";");
+
+            // Refresh questionnaire translations (clears old XML URLs; S3 upload will re-set them)
+            sql.add("DELETE FROM questionnaire_translations WHERE questionnaireId = " + questionnaireId + ";");
+            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" +
+                    questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
+            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" +
+                    questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+
+            // Also update the questionnaire name if it changed
+            sql.add("UPDATE questionnaires SET name = '" + escape(truncatedName) + "' WHERE id = " + questionnaireId + ";");
+
+            warnings.add("Questionnaire '" + truncatedName + "' wordt bijgewerkt (ID: " + questionnaireId +
+                    "). Oude items verwijderd, nieuwe worden aangemaakt.");
         } else {
-            questionnaireId = questionnaireSequence.incrementAndGet();
+            questionnaireId = questionnaireSeq++;
             sql.add("INSERT INTO questionnaires(id, name) VALUES (" + questionnaireId + ", '" + escape(truncatedName) + "');");
-            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
-            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" + questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
+            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" +
+                    questionnaireId + ", 'nl', '" + escape(truncatedName) + "', NULL, NULL);");
+            sql.add("INSERT INTO questionnaire_translations(questionnaireId, language, name, questions, report) VALUES (" +
+                    questionnaireId + ", 'en', '" + escape(truncatedName) + "', NULL, NULL);");
         }
 
         long newCompetenceCount = 0;
@@ -123,6 +107,11 @@ public class MetroIntegrationService {
         long newItemCount = 0;
         int itemOrder = 0;
 
+        // Track section numbers for competence_questions questionId (matches XML section numbering)
+        Map<String, Integer> categorySections = new HashMap<>();
+        Map<String, Integer> sectionQuestionCounters = new HashMap<>();
+        int nextSectionNumber = 1;
+
         for (CompetenceInput input : request.competences()) {
             String categoryName = safeTrim(input.category());
             String subcategoryName = safeTrim(input.subcategory());
@@ -130,9 +119,9 @@ public class MetroIntegrationService {
             String categoryKey = categoryName.toLowerCase(Locale.ROOT);
             Long categoryId = categoryIds.get(categoryKey);
             if (categoryId == null) {
-                categoryId = lookupExistingCategoryId(categoryName);
+                categoryId = repo.findCategoryIdByName(categoryName).orElse(null);
                 if (categoryId == null) {
-                    categoryId = categorySequence.incrementAndGet();
+                    categoryId = categorySeq++;
                     sql.add("INSERT INTO categories(id, name) VALUES (" + categoryId + ", '" + escape(categoryName) + "');");
                     sql.add("INSERT INTO category_translations(categoryId, language, name) VALUES (" + categoryId + ", 'nl', '" + escape(categoryName) + "');");
                     sql.add("INSERT INTO category_translations(categoryId, language, name) VALUES (" + categoryId + ", 'en', '" + escape(categoryName) + "');");
@@ -140,15 +129,20 @@ public class MetroIntegrationService {
                 }
                 categoryIds.put(categoryKey, categoryId);
             }
+            // Track section number for this category (for questionId in competence_questions)
+            if (!categorySections.containsKey(categoryKey)) {
+                categorySections.put(categoryKey, nextSectionNumber++);
+                sectionQuestionCounters.put(categoryKey, 0);
+            }
 
             Long goalId = null;
             if (!subcategoryName.isBlank()) {
                 String goalKey = subcategoryName.toLowerCase(Locale.ROOT);
                 goalId = goalIds.get(goalKey);
                 if (goalId == null) {
-                    goalId = lookupExistingGoalId(subcategoryName);
+                    goalId = repo.findGoalIdByName(subcategoryName).orElse(null);
                     if (goalId == null) {
-                        goalId = goalSequence.incrementAndGet();
+                        goalId = goalSeq++;
                         sql.add("INSERT INTO goals(id, name) VALUES (" + goalId + ", '" + escape(subcategoryName) + "');");
                         sql.add("INSERT INTO goal_translations(goalId, language, name) VALUES (" + goalId + ", 'nl', '" + escape(subcategoryName) + "');");
                         sql.add("INSERT INTO goal_translations(goalId, language, name) VALUES (" + goalId + ", 'en', '" + escape(subcategoryName) + "');");
@@ -160,11 +154,11 @@ public class MetroIntegrationService {
 
             Long competenceId = input.existingId();
             if (competenceId == null) {
-                competenceId = lookupExistingCompetenceId(input.name());
+                competenceId = repo.findCompetenceIdByName(input.name()).orElse(null);
             }
 
             if (competenceId == null && input.isNew()) {
-                competenceId = competenceSequence.incrementAndGet();
+                competenceId = competenceSeq++;
                 String competenceName = safeTrim(input.name());
                 String description = safeTrim(input.description());
                 String nameEn = safeTrim(input.nameEn());
@@ -173,11 +167,13 @@ public class MetroIntegrationService {
                 sql.add("INSERT INTO competences(id, name, description, defaultMinPassScore, defaultMinMentorScore) VALUES (" +
                         competenceId + ", '" + escape(competenceName) + "', " + nullOrQuoted(description) + ", NULL, NULL);");
 
-                sql.add("INSERT INTO competence_translations(competenceId, language, name, description) VALUES (" + competenceId + ", 'nl', '" + escape(competenceName) + "', " + nullOrQuoted(description) + ");");
+                sql.add("INSERT INTO competence_translations(competenceId, language, name, description) VALUES (" +
+                        competenceId + ", 'nl', '" + escape(competenceName) + "', " + nullOrQuoted(description) + ");");
 
                 String effectiveEnName = nameEn.isBlank() ? competenceName : nameEn;
                 String effectiveEnDescription = descriptionEn.isBlank() ? description : descriptionEn;
-                sql.add("INSERT INTO competence_translations(competenceId, language, name, description) VALUES (" + competenceId + ", 'en', '" + escape(effectiveEnName) + "', " + nullOrQuoted(effectiveEnDescription) + ");");
+                sql.add("INSERT INTO competence_translations(competenceId, language, name, description) VALUES (" +
+                        competenceId + ", 'en', '" + escape(effectiveEnName) + "', " + nullOrQuoted(effectiveEnDescription) + ");");
                 newCompetenceCount++;
             }
 
@@ -192,20 +188,18 @@ public class MetroIntegrationService {
                 sql.add("INSERT IGNORE INTO goal_competences (goalId, competenceId) VALUES (" + goalId + ", " + competenceId + ");");
             }
 
-            // Create item for this competence (Niet-vraag / Wel-vraag)
+            // Create item for this competence
             String questionLeft = safeTrim(input.questionLeft());
             String questionRight = safeTrim(input.questionRight());
             String questionLeftEn = safeTrim(input.questionLeftEn());
             String questionRightEn = safeTrim(input.questionRightEn());
 
             if (!questionLeft.isBlank() || !questionRight.isBlank()) {
-                long itemId = itemSequence.incrementAndGet();
+                long itemId = itemSeq++;
                 String itemName = safeTrim(input.name()) + "_item";
 
-                // Create item
                 sql.add("INSERT INTO items(id, name, invertOrder) VALUES (" + itemId + ", '" + escape(itemName) + "', 0);");
 
-                // Create item translations (leftText = Niet-vraag, rightText = Wel-vraag)
                 String effectiveLeftNl = questionLeft.isBlank() ? questionRight : questionLeft;
                 String effectiveRightNl = questionRight.isBlank() ? questionLeft : questionRight;
                 String effectiveLeftEn = questionLeftEn.isBlank() ? effectiveLeftNl : questionLeftEn;
@@ -216,15 +210,39 @@ public class MetroIntegrationService {
                 sql.add("INSERT INTO item_translations(itemId, language, leftText, rightText) VALUES (" +
                         itemId + ", 'en', '" + escape(effectiveLeftEn) + "', '" + escape(effectiveRightEn) + "');");
 
-                // Link item to questionnaire
                 itemOrder++;
                 sql.add("INSERT IGNORE INTO questionnaire_items (questionnaireId, itemId, `order`) VALUES (" +
                         questionnaireId + ", " + itemId + ", " + itemOrder + ");");
 
-                // Link item to competence
                 sql.add("INSERT IGNORE INTO competence_items (competenceId, itemId) VALUES (" + competenceId + ", " + itemId + ");");
 
+                // Link competence to question for Metro scoring (competence_questions)
+                int sectionNum = categorySections.get(categoryKey);
+                int questionInSection = sectionQuestionCounters.get(categoryKey) + 1;
+                sectionQuestionCounters.put(categoryKey, questionInSection);
+                String questionId = sectionNum + "." + questionInSection + ".";
+                sql.add("INSERT INTO competence_questions (competenceId, questionnaireId, questionId, cq_id) VALUES (" +
+                        competenceId + ", " + questionnaireId + ", '" + escape(questionId) + "', " + cqSeq++ + ");");
+
                 newItemCount++;
+            }
+        }
+
+        // Link questionnaire, categories and goals to all selected groups
+        for (Long groupId : request.groupIds()) {
+            sql.add("INSERT IGNORE INTO group_questionnaires (groupId, questionnaireId, promoted, price) VALUES (" +
+                    groupId + ", " + questionnaireId + ", 0, 0.00);");
+            for (Long catId : categoryIds.values()) {
+                // group_categories has no UNIQUE constraint, so INSERT IGNORE won't prevent duplicates.
+                // Use WHERE NOT EXISTS to avoid creating duplicate rows on re-publish.
+                sql.add("INSERT INTO group_categories (groupId, categoryId) " +
+                        "SELECT " + groupId + ", " + catId + " FROM DUAL " +
+                        "WHERE NOT EXISTS (SELECT 1 FROM group_categories WHERE groupId = " + groupId + " AND categoryId = " + catId + ");");
+            }
+            for (Long gId : goalIds.values()) {
+                sql.add("INSERT INTO group_goals (groupId, goalId) " +
+                        "SELECT " + groupId + ", " + gId + " FROM DUAL " +
+                        "WHERE NOT EXISTS (SELECT 1 FROM group_goals WHERE groupId = " + groupId + " AND goalId = " + gId + ");");
             }
         }
 
@@ -235,87 +253,12 @@ public class MetroIntegrationService {
                 questionnaireId,
                 newItemCount
         );
-        maybeAddLookupWarning(warnings);
         return new IntegrationPreviewResponse(sql, warnings, summary);
     }
 
-    private long resolveStartId(long fallback, String table) {
-        MetroLookupRepository repo = getLookupRepository();
-        if (repo == null) {
-            return fallback;
-        }
-        try {
-            long maxId = repo.getMaxId(table);
-            return Math.max(fallback, maxId + 1);
-        } catch (Exception ex) {
-            recordLookupError(ex);
-            return fallback;
-        }
-    }
-
-    private Long lookupExistingQuestionnaireId(String questionnaireName) {
-        MetroLookupRepository repo = getLookupRepository();
-        if (repo == null) {
-            return null;
-        }
-        try {
-            return repo.findQuestionnaireIdByName(questionnaireName).orElse(null);
-        } catch (Exception ex) {
-            recordLookupError(ex);
-            return null;
-        }
-    }
-
-    private Long lookupExistingCategoryId(String categoryName) {
-        MetroLookupRepository repo = getLookupRepository();
-        if (repo == null) {
-            return null;
-        }
-        try {
-            return repo.findCategoryIdByName(categoryName).orElse(null);
-        } catch (Exception ex) {
-            recordLookupError(ex);
-            return null;
-        }
-    }
-
-    private Long lookupExistingGoalId(String goalName) {
-        MetroLookupRepository repo = getLookupRepository();
-        if (repo == null) {
-            return null;
-        }
-        try {
-            return repo.findGoalIdByName(goalName).orElse(null);
-        } catch (Exception ex) {
-            recordLookupError(ex);
-            return null;
-        }
-    }
-
-    private Long lookupExistingCompetenceId(String competenceName) {
-        MetroLookupRepository repo = getLookupRepository();
-        if (repo == null) {
-            return null;
-        }
-        try {
-            return repo.findCompetenceIdByName(competenceName).orElse(null);
-        } catch (Exception ex) {
-            recordLookupError(ex);
-            return null;
-        }
-    }
-
-    private void recordLookupError(Exception ex) {
-        if (lookupError == null) {
-            lookupError = "Metro lookup unavailable: " + ex.getMessage();
-        }
-    }
-
-    private void maybeAddLookupWarning(List<String> warnings) {
-        if (lookupError != null) {
-            warnings.add(lookupError);
-        }
-    }
+    // ─────────────────────────────────────────────────────────────
+    // Utility methods
+    // ─────────────────────────────────────────────────────────────
 
     private String safeTrim(String value) {
         return value == null ? "" : value.trim();

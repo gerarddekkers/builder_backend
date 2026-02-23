@@ -1,4 +1,9 @@
 package com.mentesme.builder.model;
 
-public record PublishResult(long questionnaireId, boolean published) {
+import java.util.Map;
+
+public record PublishResult(long questionnaireId, boolean published, Map<String, Long> timings) {
+    public PublishResult(long questionnaireId, boolean published) {
+        this(questionnaireId, published, null);
+    }
 }

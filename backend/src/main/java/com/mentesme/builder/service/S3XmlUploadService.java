@@ -44,18 +44,35 @@ public class S3XmlUploadService {
     }
 
     /**
-     * Build S3 key: {prefix}/{lang}/{questionnaireId}/{filename}
+     * Build S3 key matching Metro convention: {prefix}/{lang}/{type}_{slug}_{LANG}.xml
+     * Example: test/nl/questionnaire_persoonlijk_leiderschap_NL.xml
      */
-    public String buildKey(String language, long questionnaireId, String filename) {
-        return s3Properties.getPrefix() + "/" + language + "/" + questionnaireId + "/" + filename;
+    public String buildKey(String prefix, String language, String assessmentName, String type) {
+        String slug = toSlug(assessmentName);
+        String langSuffix = language.toUpperCase();
+        return prefix + "/" + language + "/" + type + "_" + slug + "_" + langSuffix + ".xml";
     }
 
     /**
-     * Build full S3 URL: https://{bucket}.s3.{region}.amazonaws.com/{key}
+     * Convert assessment name to a URL-safe slug: lowercase, spaces to underscores,
+     * remove special characters, trim trailing underscores.
+     */
+    static String toSlug(String name) {
+        if (name == null || name.isBlank()) return "unnamed";
+        String slug = name.trim().toLowerCase()
+                .replaceAll("[^a-z0-9\\s_-]", "")  // remove special chars
+                .replaceAll("[\\s-]+", "_")          // spaces/dashes to underscores
+                .replaceAll("_+", "_")               // collapse multiple underscores
+                .replaceAll("^_|_$", "");            // trim leading/trailing underscores
+        return slug.isEmpty() ? "unnamed" : slug;
+    }
+
+    /**
+     * Build full S3 URL: https://{bucket}.s3.amazonaws.com/{key}
+     * Metro expects the global endpoint (without region).
      */
     public String buildUrl(String key) {
-        return "https://" + s3Properties.getBucket() + ".s3."
-                + s3Properties.getRegion() + ".amazonaws.com/" + key;
+        return "https://" + s3Properties.getBucket() + ".s3.amazonaws.com/" + key;
     }
 
     /**
