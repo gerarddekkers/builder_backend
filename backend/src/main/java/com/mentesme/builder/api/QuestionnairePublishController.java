@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:5173", "https://builder.mentes.me", "https://builder-prod.mentes.me"})
@@ -50,6 +51,16 @@ public class QuestionnairePublishController {
         }
         log.warn("PRODUCTION publish triggered for assessment: {}", request.assessmentName());
         return publishService.publish(request, PublishEnvironment.PRODUCTION);
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleBeanValidation(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String detail = ex.getBindingResult().getFieldErrors().stream()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        log.warn("Publish bean validation failed: {}", detail);
+        return ResponseEntity.badRequest().body(Map.of("error", detail));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
