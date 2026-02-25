@@ -83,7 +83,7 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // Token is valid — extract role and username as request attributes
+        // Token is valid — extract role, username, and userId as request attributes
         String role = tokenService.extractRole(token);
         if (role != null) {
             httpRequest.setAttribute("userRole", role);
@@ -91,6 +91,10 @@ public class AuthFilter implements Filter {
         String username = tokenService.extractUsername(token);
         if (username != null) {
             httpRequest.setAttribute("userName", username);
+        }
+        String userId = tokenService.extractUserId(token);
+        if (userId != null) {
+            httpRequest.setAttribute("userId", userId);
         }
         chain.doFilter(request, response);
     }

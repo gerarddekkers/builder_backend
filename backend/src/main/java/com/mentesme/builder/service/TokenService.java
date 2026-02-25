@@ -19,12 +19,22 @@ public class TokenService {
         this.authProperties = authProperties;
     }
 
-    public String generateToken(String username, String role) {
+    /**
+     * New format: userId:username:role:expiresAt:signature
+     */
+    public String generateToken(long userId, String username, String role) {
         long expiresAt = Instant.now().plusSeconds(TOKEN_VALIDITY_HOURS * 3600).getEpochSecond();
-        String payload = username + ":" + role + ":" + expiresAt;
+        String payload = userId + ":" + username + ":" + role + ":" + expiresAt;
         String signature = sign(payload);
         return Base64.getUrlEncoder().withoutPadding()
                 .encodeToString((payload + ":" + signature).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Legacy format (backward compatible): username:role:expiresAt:signature
+     */
+    public String generateToken(String username, String role) {
+        return generateToken(0L, username, role);
     }
 
     public boolean validateToken(String token) {
@@ -34,54 +44,69 @@ public class TokenService {
         try {
             String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
             String[] parts = decoded.split(":");
-            if (parts.length != 4) {
+            // Support both old (4 parts) and new (5 parts) format
+            if (parts.length != 4 && parts.length != 5) {
                 return false;
             }
-            String username = parts[0];
-            String role = parts[1];
-            long expiresAt = Long.parseLong(parts[2]);
-            String signature = parts[3];
 
-            // Check expiration
+            long expiresAt;
+            String signature;
+            String payload;
+
+            if (parts.length == 5) {
+                // New format: userId:username:role:expiresAt:signature
+                expiresAt = Long.parseLong(parts[3]);
+                signature = parts[4];
+                payload = parts[0] + ":" + parts[1] + ":" + parts[2] + ":" + parts[3];
+            } else {
+                // Old format: username:role:expiresAt:signature
+                expiresAt = Long.parseLong(parts[2]);
+                signature = parts[3];
+                payload = parts[0] + ":" + parts[1] + ":" + parts[2];
+            }
+
             if (Instant.now().getEpochSecond() > expiresAt) {
                 return false;
             }
 
-            // Verify signature
-            String expectedSignature = sign(username + ":" + role + ":" + expiresAt);
+            String expectedSignature = sign(payload);
             return signature.equals(expectedSignature);
         } catch (Exception e) {
             return false;
         }
     }
 
-    public String extractUsername(String token) {
-        if (token == null || token.isBlank()) {
-            return null;
-        }
-        try {
-            String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
-            String[] parts = decoded.split(":");
-            if (parts.length != 4) {
-                return null;
-            }
+    public String extractUserId(String token) {
+        String[] parts = decodeParts(token);
+        if (parts != null && parts.length == 5) {
             return parts[0];
-        } catch (Exception e) {
-            return null;
         }
+        return null; // old format token has no userId
+    }
+
+    public String extractUsername(String token) {
+        String[] parts = decodeParts(token);
+        if (parts == null) return null;
+        return parts.length == 5 ? parts[1] : parts[0];
     }
 
     public String extractRole(String token) {
+        String[] parts = decodeParts(token);
+        if (parts == null) return null;
+        return parts.length == 5 ? parts[2] : parts[1];
+    }
+
+    private String[] decodeParts(String token) {
         if (token == null || token.isBlank()) {
             return null;
         }
         try {
             String decoded = new String(Base64.getUrlDecoder().decode(token), StandardCharsets.UTF_8);
             String[] parts = decoded.split(":");
-            if (parts.length != 4) {
+            if (parts.length != 4 && parts.length != 5) {
                 return null;
             }
-            return parts[1];
+            return parts;
         } catch (Exception e) {
             return null;
         }

@@ -65,13 +65,47 @@ if ! aws sts get-caller-identity &>/dev/null; then
     exit 1
 fi
 
+# ── Git checks ─────────────────────────────────────────────────────
+
+cd "${SCRIPT_DIR}"
+
+# 1. Dirty check: refuse to deploy uncommitted changes
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "ERROR: Working directory has uncommitted changes."
+    echo ""
+    git status --short
+    echo ""
+    echo "Commit or stash your changes before deploying."
+    exit 1
+fi
+
+# 2. Get git commit hash for version traceability
+GIT_HASH="$(git rev-parse --short=7 HEAD)"
+GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+echo "Git: ${GIT_BRANCH} @ ${GIT_HASH}"
+
+# 3. Push check: warn if local is ahead of remote
+LOCAL_HEAD="$(git rev-parse HEAD)"
+REMOTE_HEAD="$(git rev-parse origin/${GIT_BRANCH} 2>/dev/null || echo 'unknown')"
+if [[ "${REMOTE_HEAD}" == "unknown" ]]; then
+    echo "WARNING: No remote tracking branch for '${GIT_BRANCH}'."
+elif [[ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ]]; then
+    AHEAD="$(git rev-list origin/${GIT_BRANCH}..HEAD --count)"
+    if [[ "${AHEAD}" -gt 0 ]]; then
+        echo "WARNING: Local is ${AHEAD} commit(s) ahead of origin/${GIT_BRANCH}."
+        echo "         Run 'git push' after deploy to keep remote in sync."
+    fi
+fi
+
 # ── Build ────────────────────────────────────────────────────────────
 
+echo ""
 echo "══════════════════════════════════════════════════════════"
 echo "  DEPLOY: ${APP_NAME} → ${ENV_NAME}"
+echo "  Commit: ${GIT_HASH} (${GIT_BRANCH})"
 echo "══════════════════════════════════════════════════════════"
 echo ""
-echo "[1/6] Building backend..."
+echo "[1/7] Building backend..."
 cd "${BACKEND_DIR}"
 mvn clean package -DskipTests -q
 
@@ -92,11 +126,11 @@ echo "       .platform/nginx/conf.d/timeout.conf OK"
 # ── Create deployment ZIP ────────────────────────────────────────────
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-VERSION_LABEL="journeys-${ENV_ARG}-${TIMESTAMP}"
+VERSION_LABEL="journeys-${ENV_ARG}-${TIMESTAMP}-${GIT_HASH}"
 ZIP_FILE="/tmp/${VERSION_LABEL}.zip"
 
 echo ""
-echo "[2/6] Creating deployment ZIP..."
+echo "[2/7] Creating deployment ZIP..."
 cd "${BACKEND_DIR}"
 rm -f "${ZIP_FILE}"
 zip -j "${ZIP_FILE}" target/ROOT.war -q
@@ -108,14 +142,14 @@ echo "       ${ZIP_FILE} OK"
 S3_KEY="${S3_PREFIX}/${VERSION_LABEL}.zip"
 
 echo ""
-echo "[3/6] Uploading to s3://${S3_BUCKET}/${S3_KEY}..."
+echo "[3/7] Uploading to s3://${S3_BUCKET}/${S3_KEY}..."
 aws s3 cp "${ZIP_FILE}" "s3://${S3_BUCKET}/${S3_KEY}" --region "${REGION}" --only-show-errors
 echo "       Upload complete"
 
 # ── Create EB application version ────────────────────────────────────
 
 echo ""
-echo "[4/6] Creating EB version: ${VERSION_LABEL}..."
+echo "[4/7] Creating EB version: ${VERSION_LABEL}..."
 aws elasticbeanstalk create-application-version \
     --application-name "${APP_NAME}" \
     --version-label "${VERSION_LABEL}" \
@@ -127,7 +161,7 @@ echo "       Version created"
 # ── Deploy to environment ────────────────────────────────────────────
 
 echo ""
-echo "[5/6] Deploying ${VERSION_LABEL} → ${ENV_NAME}..."
+echo "[5/7] Deploying ${VERSION_LABEL} → ${ENV_NAME}..."
 aws elasticbeanstalk update-environment \
     --application-name "${APP_NAME}" \
     --environment-name "${ENV_NAME}" \
@@ -138,7 +172,7 @@ aws elasticbeanstalk update-environment \
 # ── Wait for Green/Ready ────────────────────────────────────────────
 
 echo ""
-echo "[6/6] Waiting for ${ENV_NAME} to become Green/Ready..."
+echo "[6/7] Waiting for ${ENV_NAME} to become Green/Ready..."
 MAX_WAIT=300
 ELAPSED=0
 INTERVAL=15
@@ -171,6 +205,18 @@ if [[ "${ENV_STATUS}" != "Ready" || "${ENV_HEALTH}" != "Green" ]]; then
     exit 1
 fi
 
+# ── Git tag ─────────────────────────────────────────────────────────
+
+echo ""
+echo "[7/7] Creating git tag..."
+cd "${SCRIPT_DIR}"
+TAG_NAME="deploy/journeys-${ENV_ARG}/${TIMESTAMP}"
+git tag -a "${TAG_NAME}" -m "Deploy journeys ${ENV_ARG}: ${VERSION_LABEL}" 2>/dev/null && \
+    echo "       Tagged: ${TAG_NAME}" && \
+    git push origin "${TAG_NAME}" --quiet 2>/dev/null && \
+    echo "       Pushed tag to origin" || \
+    echo "       WARNING: Could not create/push tag (non-fatal)"
+
 # ── Cleanup ──────────────────────────────────────────────────────────
 
 rm -f "${ZIP_FILE}"
@@ -184,5 +230,7 @@ echo ""
 echo "  Application:  ${APP_NAME}"
 echo "  Environment:  ${ENV_NAME}"
 echo "  Version:      ${VERSION_LABEL}"
+echo "  Commit:       ${GIT_HASH} (${GIT_BRANCH})"
+echo "  Tag:          ${TAG_NAME}"
 echo "  Status:       Green / Ready"
 echo "══════════════════════════════════════════════════════════"
