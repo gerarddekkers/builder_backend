@@ -69,11 +69,11 @@ fi
 
 cd "${SCRIPT_DIR}"
 
-# 1. Dirty check: refuse to deploy uncommitted changes
-if [[ -n "$(git status --porcelain)" ]]; then
+# 1. Dirty check: refuse to deploy uncommitted changes to tracked files
+if ! git diff --quiet HEAD -- 2>/dev/null; then
     echo "ERROR: Working directory has uncommitted changes."
     echo ""
-    git status --short
+    git diff --name-only HEAD
     echo ""
     echo "Commit or stash your changes before deploying."
     exit 1
