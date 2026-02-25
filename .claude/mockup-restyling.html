@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment Builder - Restyling Mockup</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
+    --primary-border: #bfdbfe;
+    --success: #16a34a;
+    --success-bg: #dcfce7;
+    --success-border: #86efac;
+    --warning: #d97706;
+    --warning-bg: #fef3c7;
+    --warning-border: #fcd34d;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --bg: #f5f6fa;
+    --panel: #ffffff;
+    --text: #1f2933;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header-brand h1 { font-size: 20px; font-weight: 700; }
+  .header-brand span { font-size: 13px; color: var(--text-secondary); }
+  .header-actions { display: flex; gap: 8px; }
+  .header-btn {
+    border: none; border-radius: var(--radius-sm); padding: 8px 14px;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: var(--border-light); color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .header-btn:hover { background: var(--border); color: var(--text); }
+  .header-btn.save { background: var(--primary); color: white; }
+  .header-btn.save:hover { background: var(--primary-hover); }
+  .header-btn.logout { color: var(--danger); border: 1px solid #fecaca; background: transparent; }
+
+  /* ── Wizard Nav ── */
+  .wizard-container { max-width: 1100px; margin: 0 auto; padding: 24px 24px 0; }
+  .wizard-nav {
+    display: flex; align-items: center; gap: 0;
+    background: var(--panel); border-radius: var(--radius); padding: 8px;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+  }
+  .wizard-step {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 14px 16px; border-radius: var(--radius-sm);
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-muted); font-size: 14px; font-weight: 600;
+    font-family: inherit; transition: all 0.2s; position: relative;
+  }
+  .wizard-step:hover { background: var(--border-light); color: var(--text-secondary); }
+  .wizard-step.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+  .wizard-step.complete { color: var(--success); }
+  .wizard-step.disabled { opacity: 0.4; cursor: not-allowed; }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 13px;
+    font-weight: 700; background: var(--border); color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .wizard-step.active .step-num { background: rgba(255,255,255,0.25); color: white; }
+  .wizard-step.complete .step-num { background: var(--success-bg); color: var(--success); }
+  .step-connector {
+    width: 24px; height: 2px; background: var(--border); flex-shrink: 0;
+  }
+  .step-connector.done { background: var(--success); }
+
+  /* ── Content Area ── */
+  .content { max-width: 1100px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .panel {
+    background: var(--panel); border-radius: var(--radius); padding: 28px;
+    box-shadow: 0 10px 25px rgba(15,23,42,0.06);
+  }
+  .panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+  }
+  .panel-header h2 { font-size: 20px; }
+
+  /* ── Language Toggle ── */
+  .lang-toggle {
+    display: inline-flex; border-radius: var(--radius-xs); overflow: hidden;
+    border: 1px solid var(--border); font-size: 13px;
+  }
+  .lang-btn {
+    border: none; padding: 6px 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit; background: transparent; color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .lang-btn.active { background: var(--primary); color: white; }
+  .lang-btn:hover:not(.active) { background: var(--border-light); }
+
+  /* ── Form Fields ── */
+  .form-group { margin-bottom: 20px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label {
+    display: block; font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); margin-bottom: 6px;
+  }
+  .form-label .required { color: var(--danger); }
+  .form-input, .form-textarea {
+    width: 100%; padding: 11px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); font-size: 14px; font-family: inherit;
+    transition: all 0.15s; background: white;
+  }
+  .form-input:focus, .form-textarea:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .form-warning {
+    font-size: 12px; color: var(--warning); font-weight: 500; margin-top: 4px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .translated-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--success); font-weight: 500;
+    margin-left: 8px; opacity: 0.8;
+  }
+
+  /* ── Tags / Chips ── */
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 500;
+    background: var(--success-bg); color: #166534;
+  }
+  .tag-remove {
+    border: none; background: none; cursor: pointer; padding: 0;
+    font-size: 16px; line-height: 1; color: inherit; opacity: 0.6;
+  }
+  .tag-remove:hover { opacity: 1; }
+
+  /* ── Category Box ── */
+  .category-box {
+    border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; background: #fafbfc;
+  }
+  .category-box + .category-box { margin-top: 16px; }
+  .cat-header {
+    background: var(--border-light); padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cat-title { display: flex; align-items: center; gap: 10px; }
+  .cat-name { font-weight: 700; font-size: 15px; }
+  .cat-actions { display: flex; gap: 4px; }
+  .cat-btn {
+    border: none; background: transparent; cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; color: var(--text-muted);
+    font-size: 14px;
+  }
+  .cat-btn:hover { background: var(--border); color: var(--text); }
+  .cat-btn.delete:hover { background: var(--danger-bg); color: var(--danger); }
+  .cat-desc {
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    font-size: 13px; color: var(--text-secondary); background: #fafcfe;
+  }
+  .cat-content { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── Competence Item ── */
+  .comp-item {
+    background: white; border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .comp-info { display: flex; align-items: center; gap: 10px; }
+  .comp-name { font-weight: 600; font-size: 14px; }
+  .comp-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 6px; white-space: nowrap;
+  }
+  .badge-existing { background: var(--success-bg); color: #166534; }
+  .badge-new { background: var(--warning-bg); color: #92400e; }
+  .comp-actions { display: flex; gap: 4px; }
+
+  /* ── Add Buttons ── */
+  .add-btn {
+    border: 1px dashed var(--border); background: transparent;
+    color: var(--text-secondary); padding: 10px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; width: 100%; text-align: center;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .add-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+  .add-btn.large { border-width: 2px; padding: 16px; font-size: 14px; font-weight: 600; border-radius: 14px; }
+
+  /* ── Summary Bar ── */
+  .summary-bar {
+    display: flex; gap: 16px; padding: 14px 18px;
+    background: var(--border-light); border-radius: var(--radius-sm);
+    font-size: 13px; color: var(--text-secondary);
+    align-items: center; flex-wrap: wrap;
+  }
+  .summary-stat { display: flex; align-items: center; gap: 6px; }
+  .summary-num { font-weight: 700; color: var(--text); font-size: 16px; }
+
+  /* ── Question Card ── */
+  .question-card {
+    background: white; border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+  }
+  .question-card + .question-card { margin-top: 12px; }
+  .qcard-header {
+    padding: 14px 18px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid var(--border-light);
+  }
+  .qcard-title { font-weight: 700; font-size: 15px; }
+  .qcard-status {
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-xs);
+  }
+  .qcard-status.complete { background: var(--success-bg); color: #166534; }
+  .qcard-status.empty { background: var(--border-light); color: var(--text-muted); }
+  .qcard-status.partial { background: var(--warning-bg); color: #92400e; }
+  .qcard-body { padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+
+  .question-row { display: flex; flex-direction: column; gap: 6px; }
+  .question-label-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  }
+  .q-icon {
+    width: 24px; height: 24px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 12px;
+    font-weight: 700; flex-shrink: 0;
+  }
+  .q-icon.not { background: var(--danger-bg); color: var(--danger); }
+  .q-icon.yes { background: var(--success-bg); color: var(--success); }
+
+  /* ── Category Section Header (Step 3) ── */
+  .cat-section { margin-bottom: 28px; }
+  .cat-section:last-child { margin-bottom: 0; }
+  .cat-section-title {
+    font-size: 14px; font-weight: 700; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding-bottom: 8px; margin-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cat-progress { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .cat-progress.complete { color: var(--success); }
+  .cat-progress.incomplete { color: var(--warning); }
+
+  /* ── Review Step ── */
+  .review-card {
+    border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden;
+  }
+  .review-card + .review-card { margin-top: 16px; }
+  .review-header {
+    padding: 14px 18px; background: var(--border-light);
+    font-weight: 700; font-size: 14px; border-bottom: 1px solid var(--border);
+  }
+  .review-body { padding: 18px; }
+  .review-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border-light);
+  }
+  .review-row:last-child { border-bottom: none; }
+  .review-label { font-size: 13px; color: var(--text-secondary); }
+  .review-value { font-size: 14px; font-weight: 600; }
+
+  .review-tree { padding: 0; }
+  .tree-category {
+    padding: 12px 18px; border-bottom: 1px solid var(--border-light);
+  }
+  .tree-category:last-child { border-bottom: none; }
+  .tree-cat-name { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .tree-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0 6px 18px; font-size: 13px;
+  }
+  .tree-checks { display: flex; gap: 8px; }
+  .check-ok { color: var(--success); font-size: 12px; font-weight: 600; }
+  .check-warn { color: var(--warning); font-size: 12px; font-weight: 600; }
+
+  /* ── Publish Buttons ── */
+  .publish-row {
+    display: flex; gap: 12px; margin-top: 8px;
+  }
+  .btn {
+    border: none; border-radius: 12px; padding: 12px 24px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    font-size: 14px; transition: all 0.15s; flex: 1; text-align: center;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary { background: #e0e7ff; color: #1e40af; }
+  .btn-secondary:hover { background: #c7d2fe; }
+  .btn-danger { background: var(--danger); color: white; opacity: 0.5; cursor: not-allowed; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+  .btn-outline:hover { background: var(--border-light); color: var(--text); }
+  .btn-ghost { background: transparent; color: var(--text-secondary); }
+  .btn-ghost:hover { background: var(--border-light); }
+
+  /* ── Footer Nav ── */
+  .footer-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 8px;
+  }
+  .footer-nav .hint { font-size: 13px; color: var(--text-muted); }
+
+  /* ── Step visibility ── */
+  .step-content { display: none; }
+  .step-content.active { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── Mockup Banner ── */
+  .mockup-banner {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white; text-align: center; padding: 10px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .header { padding: 12px 16px; }
+    .header-brand h1 { font-size: 17px; }
+    .wizard-container { padding: 16px 16px 0; }
+    .wizard-step { padding: 10px 8px; font-size: 12px; }
+    .step-label { display: none; }
+    .content { padding: 16px; }
+    .panel { padding: 20px; }
+    .publish-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">
+  MOCKUP - Assessment Builder Restyling - klik op de wizard stappen om de flow te zien
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-brand">
+    <h1>Assessment Builder</h1>
+    <span>MentesMe</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="alert('Projecten sidebar opent')">Projecten</button>
+    <button class="header-btn save">Opslaan</button>
+    <button class="header-btn logout">Uitloggen</button>
+  </div>
+</header>
+
+<!-- Wizard Nav -->
+<div class="wizard-container">
+  <nav class="wizard-nav" id="wizardNav">
+    <button class="wizard-step active" data-step="1">
+      <span class="step-num">1</span>
+      <span class="step-label">Assessment</span>
+    </button>
+    <span class="step-connector done"></span>
+    <button class="wizard-step" data-step="2">
+      <span class="step-num">2</span>
+      <span class="step-label">Competenties</span>
+    </button>
+    <span class="step-connector"></span>
+    <button class="wizard-step" data-step="3">
+      <span class="step-num">3</span>
+      <span class="step-label">Vragen</span>
+    </button>
+    <span class="step-connector"></span>
+    <button class="wizard-step" data-step="4">
+      <span class="step-num">4</span>
+      <span class="step-label">Review</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 1: Assessment Info
+     ═══════════════════════════════════════════════════════ -->
+<div class="content step-content active" id="step1">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Assessment Informatie</h2>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="switchLang(this)">NL</button>
+        <button class="lang-btn" onclick="switchLang(this)">EN</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Naam <span class="required">*</span>
+        <span class="translated-badge">EN: vertaald</span>
+      </label>
+      <input class="form-input" value="Leiderschap Assessment 2026" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Beschrijving (rapport introductie)
+        <span class="translated-badge">EN: vertaald</span>
+      </label>
+      <textarea class="form-textarea" rows="4">Dit assessment is bedoeld om inzicht te krijgen in uw leiderschapscompetenties. Op basis van de resultaten wordt een persoonlijk ontwikkelplan opgesteld.</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Instructie (bovenaan vragenlijst)
+        <span class="translated-badge">EN: vertaald</span>
+      </label>
+      <textarea class="form-textarea" rows="3">Deze vragenlijst is bedoeld om uw leiderschapscompetenties te bepalen. Geef aan in hoeverre de stellingen op u van toepassing zijn.</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Groep(en) <span class="required">*</span></label>
+      <input class="form-input" placeholder="Zoek een groep..." />
+      <div class="tag-list">
+        <span class="tag">MentesMe Intern (ID: 5) <button class="tag-remove">&times;</button></span>
+        <span class="tag">Onderwijs Groep (ID: 12) <button class="tag-remove">&times;</button></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="footer-nav">
+      <span></span>
+      <button class="btn btn-primary" onclick="goToStep(2)">Volgende: Competenties &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 2: Competencies
+     ═══════════════════════════════════════════════════════ -->
+<div class="content step-content" id="step2">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Competenties</h2>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="switchLang(this)">NL</button>
+        <button class="lang-btn" onclick="switchLang(this)">EN</button>
+      </div>
+    </div>
+
+    <!-- Category 1 -->
+    <div class="category-box">
+      <div class="cat-header">
+        <div class="cat-title">
+          <span class="cat-name">Leiderschap</span>
+          <span class="badge badge-existing">Bestaand</span>
+        </div>
+        <div class="cat-actions">
+          <button class="cat-btn" title="Bewerk">&#9998;</button>
+          <button class="cat-btn delete" title="Verwijder">&times;</button>
+        </div>
+      </div>
+      <div class="cat-desc">
+        Competenties die betrekking hebben op het vermogen om richting te geven, beslissingen te nemen en anderen te inspireren.
+      </div>
+      <div class="cat-content">
+        <div class="comp-item">
+          <div class="comp-info">
+            <div>
+              <div class="comp-name">Besluitvaardigheid</div>
+              <div class="comp-desc">Neemt tijdig en onderbouwd beslissingen</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge badge-existing">Bestaand ID: 23</span>
+            <button class="cat-btn delete">&times;</button>
+          </div>
+        </div>
+
+        <div class="comp-item">
+          <div class="comp-info">
+            <div>
+              <div class="comp-name">Delegeren</div>
+              <div class="comp-desc">Taken en verantwoordelijkheden overdragen</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge badge-new">+ Nieuw</span>
+            <button class="cat-btn delete">&times;</button>
+          </div>
+        </div>
+
+        <div class="comp-item">
+          <div class="comp-info">
+            <div>
+              <div class="comp-name">Visie</div>
+              <div class="comp-desc">Richting geven en inspireren met een helder toekomstbeeld</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge badge-new">+ Nieuw</span>
+            <button class="cat-btn delete">&times;</button>
+          </div>
+        </div>
+
+        <button class="add-btn">+ Competentie toevoegen aan Leiderschap</button>
+      </div>
+    </div>
+
+    <!-- Category 2 -->
+    <div class="category-box" style="margin-top:16px">
+      <div class="cat-header">
+        <div class="cat-title">
+          <span class="cat-name">Samenwerking</span>
+          <span class="badge badge-new">Nieuw</span>
+        </div>
+        <div class="cat-actions">
+          <button class="cat-btn" title="Bewerk">&#9998;</button>
+          <button class="cat-btn delete" title="Verwijder">&times;</button>
+        </div>
+      </div>
+      <div class="cat-desc">
+        Het vermogen om effectief samen te werken met anderen en bij te dragen aan gezamenlijke doelen.
+      </div>
+      <div class="cat-content">
+        <div class="comp-item">
+          <div class="comp-info">
+            <div>
+              <div class="comp-name">Teamwork</div>
+              <div class="comp-desc">Effectief samenwerken in teamverband</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge badge-existing">Bestaand ID: 45</span>
+            <button class="cat-btn delete">&times;</button>
+          </div>
+        </div>
+
+        <div class="comp-item">
+          <div class="comp-info">
+            <div>
+              <div class="comp-name">Communicatie</div>
+              <div class="comp-desc">Helder en effectief communiceren</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge badge-existing">Bestaand ID: 67</span>
+            <button class="cat-btn delete">&times;</button>
+          </div>
+        </div>
+
+        <button class="add-btn">+ Competentie toevoegen aan Samenwerking</button>
+      </div>
+    </div>
+
+    <button class="add-btn large" style="margin-top:16px">+ Nieuwe categorie toevoegen</button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-bar">
+    <div class="summary-stat"><span class="summary-num">2</span> categorien</div>
+    <div class="summary-stat"><span class="summary-num">5</span> competenties</div>
+    <div class="summary-stat"><span class="badge badge-existing">3 bestaand</span></div>
+    <div class="summary-stat"><span class="badge badge-new">2 nieuw</span></div>
+  </div>
+
+  <div class="panel">
+    <div class="footer-nav">
+      <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Terug</button>
+      <button class="btn btn-primary" onclick="goToStep(3)">Volgende: Vragen &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 3: Questions
+     ═══════════════════════════════════════════════════════ -->
+<div class="content step-content" id="step3">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Vragen per Competentie</h2>
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="switchLang(this)">NL</button>
+        <button class="lang-btn" onclick="switchLang(this)">EN</button>
+      </div>
+    </div>
+
+    <!-- Category: Leiderschap -->
+    <div class="cat-section">
+      <div class="cat-section-title">
+        Leiderschap
+        <span class="cat-progress complete">3 van 3 ingevuld</span>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-title">1.1 Besluitvaardigheid</span>
+          <span class="qcard-status complete">Volledig</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon not">&times;</span>
+              <span>Niet-vraag</span>
+              <span class="translated-badge">EN: vertaald</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Neemt geen beslissingen wanneer dat nodig is</textarea>
+          </div>
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon yes">&#10003;</span>
+              <span>Wel-vraag</span>
+              <span class="translated-badge">EN: vertaald</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Neemt tijdig en onderbouwd beslissingen</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-title">1.2 Delegeren</span>
+          <span class="qcard-status complete">Volledig</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon not">&times;</span>
+              <span>Niet-vraag</span>
+              <span class="translated-badge">EN: vertaald</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Houdt alle taken bij zichzelf en deelt niet</textarea>
+          </div>
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon yes">&#10003;</span>
+              <span>Wel-vraag</span>
+              <span class="translated-badge">EN: vertaald</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Draagt taken en verantwoordelijkheden effectief over aan teamleden</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-title">1.3 Visie</span>
+          <span class="qcard-status complete">Volledig</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon not">&times;</span>
+              <span>Niet-vraag</span>
+              <span class="translated-badge">EN: vertaald</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Geeft geen duidelijke richting of toekomstvisie</textarea>
+          </div>
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon yes">&#10003;</span>
+              <span>Wel-vraag</span>
+              <span class="translated-badge">EN: vertaald</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Inspireert anderen met een helder en motiverend toekomstbeeld</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category: Samenwerking -->
+    <div class="cat-section">
+      <div class="cat-section-title">
+        Samenwerking
+        <span class="cat-progress incomplete">1 van 2 ingevuld</span>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-title">2.1 Teamwork</span>
+          <span class="qcard-status complete">Volledig</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon not">&times;</span>
+              <span>Niet-vraag</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Werkt het liefst alleen en betrekt anderen niet</textarea>
+          </div>
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon yes">&#10003;</span>
+              <span>Wel-vraag</span>
+            </div>
+            <textarea class="form-textarea" rows="2">Werkt actief samen en draagt bij aan het teamresultaat</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="qcard-header">
+          <span class="qcard-title">2.2 Communicatie</span>
+          <span class="qcard-status empty">Nog invullen</span>
+        </div>
+        <div class="qcard-body">
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon not">&times;</span>
+              <span>Niet-vraag</span>
+            </div>
+            <textarea class="form-textarea" rows="2" placeholder="Bijv. Communiceert niet helder naar anderen"></textarea>
+          </div>
+          <div class="question-row">
+            <div class="question-label-row">
+              <span class="q-icon yes">&#10003;</span>
+              <span>Wel-vraag</span>
+            </div>
+            <textarea class="form-textarea" rows="2" placeholder="Bijv. Communiceert helder en effectief"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="footer-nav">
+      <button class="btn btn-ghost" onclick="goToStep(2)">&larr; Terug</button>
+      <button class="btn btn-primary" onclick="goToStep(4)">Volgende: Review &rarr;</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);text-align:right;margin-top:6px">Nog 1 vraag invullen</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STEP 4: Review & Publish
+     ═══════════════════════════════════════════════════════ -->
+<div class="content step-content" id="step4">
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Review & Publiceren</h2>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="review-card">
+      <div class="review-header">Assessment Overzicht</div>
+      <div class="review-body">
+        <div class="review-row">
+          <span class="review-label">Naam</span>
+          <span class="review-value">Leiderschap Assessment 2026</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Groepen</span>
+          <span class="review-value">MentesMe Intern, Onderwijs Groep</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Categorien</span>
+          <span class="review-value">2</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Competenties</span>
+          <span class="review-value">5 (3 bestaand, 2 nieuw)</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Vragen</span>
+          <span class="review-value">10 (5 links + 5 rechts)</span>
+        </div>
+        <div class="review-row">
+          <span class="review-label">Vertalingen</span>
+          <span class="review-value" style="color:var(--success)">Alle velden vertaald (NL + EN)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Structure Tree -->
+    <div class="review-card">
+      <div class="review-header">Structuur</div>
+      <div class="review-tree">
+        <div class="tree-category">
+          <div class="tree-cat-name">1. Leiderschap</div>
+          <div class="tree-item">
+            <span>1.1 Besluitvaardigheid</span>
+            <div class="tree-checks">
+              <span class="check-ok">NL &#10003;</span>
+              <span class="check-ok">EN &#10003;</span>
+            </div>
+          </div>
+          <div class="tree-item">
+            <span>1.2 Delegeren</span>
+            <div class="tree-checks">
+              <span class="check-ok">NL &#10003;</span>
+              <span class="check-ok">EN &#10003;</span>
+            </div>
+          </div>
+          <div class="tree-item">
+            <span>1.3 Visie</span>
+            <div class="tree-checks">
+              <span class="check-ok">NL &#10003;</span>
+              <span class="check-ok">EN &#10003;</span>
+            </div>
+          </div>
+        </div>
+        <div class="tree-category">
+          <div class="tree-cat-name">2. Samenwerking</div>
+          <div class="tree-item">
+            <span>2.1 Teamwork</span>
+            <div class="tree-checks">
+              <span class="check-ok">NL &#10003;</span>
+              <span class="check-warn">EN ontbreekt</span>
+            </div>
+          </div>
+          <div class="tree-item">
+            <span>2.2 Communicatie</span>
+            <div class="tree-checks">
+              <span class="check-ok">NL &#10003;</span>
+              <span class="check-ok">EN &#10003;</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="review-card">
+      <div class="review-header">Publiceren</div>
+      <div class="review-body">
+        <div class="publish-row">
+          <button class="btn btn-outline" onclick="alert('XML Preview modal opent')">XML Preview</button>
+          <button class="btn btn-primary">Publish naar TEST</button>
+          <button class="btn btn-danger" title="Eerst naar TEST publiceren">Publish naar PRODUCTIE</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:10px;text-align:center">
+          Publiceer eerst naar TEST. Na succesvolle test kun je naar PRODUCTIE publiceren.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="footer-nav">
+      <button class="btn btn-ghost" onclick="goToStep(3)">&larr; Terug naar Vragen</button>
+      <span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function goToStep(stepNum) {
+    // Hide all steps
+    document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+    // Show target step
+    document.getElementById('step' + stepNum).classList.add('active');
+
+    // Update wizard nav
+    document.querySelectorAll('.wizard-step').forEach(btn => {
+      const s = parseInt(btn.dataset.step);
+      btn.classList.remove('active', 'complete');
+      if (s === stepNum) btn.classList.add('active');
+      else if (s < stepNum) btn.classList.add('complete');
+    });
+
+    // Update connectors
+    document.querySelectorAll('.step-connector').forEach((conn, i) => {
+      if (i < stepNum - 1) conn.classList.add('done');
+      else conn.classList.remove('done');
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Click wizard steps
+  document.querySelectorAll('.wizard-step').forEach(btn => {
+    btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.step)));
+  });
+
+  function switchLang(btn) {
+    const toggle = btn.parentElement;
+    toggle.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup: Inline EN Vertalingen</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-light: #eff6ff;
+    --primary-border: #bfdbfe;
+    --success: #16a34a;
+    --success-bg: #dcfce7;
+    --warning: #d97706;
+    --warning-bg: #fef3c7;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --bg: #f5f6fa;
+    --panel: #ffffff;
+    --text: #1f2933;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    padding: 24px;
+  }
+  .container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  h1 { font-size: 20px; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+  .panel {
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+  }
+  .panel-header { margin-bottom: 24px; }
+  .panel-header h2 { font-size: 20px; }
+
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+
+  input, textarea {
+    width: 100%; padding: 11px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); font-size: 14px; font-family: inherit;
+    transition: all 0.15s; background: white;
+  }
+  input:focus, textarea:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* === NEW: Inline EN fields === */
+  .en-inline-wrapper {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 4px;
+  }
+  .en-inline-label {
+    font-size: 10px; font-weight: 700; color: var(--text-muted);
+    background: var(--border-light); padding: 2px 6px; border-radius: 4px;
+    flex-shrink: 0; margin-top: 9px; letter-spacing: 0.5px;
+  }
+  input.en-inline, textarea.en-inline {
+    font-size: 12px; padding: 8px 12px; background: #f8fafc;
+    border: 1px dashed var(--border); color: var(--text-secondary);
+    border-radius: var(--radius-xs); min-height: auto;
+  }
+  textarea.en-inline { min-height: 48px; }
+  input.en-inline:focus, textarea.en-inline:focus {
+    background: white; border-style: solid; border-color: var(--primary);
+    color: var(--text); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
+  }
+  input.en-inline::placeholder, textarea.en-inline::placeholder {
+    color: var(--text-muted); font-style: italic; opacity: 0.6;
+  }
+  input.en-inline.translating, textarea.en-inline.translating {
+    background: #f0f9ff; border-color: #7dd3fc; border-style: dashed;
+  }
+
+  /* Category box */
+  .category-box { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #fafbfc; }
+  .category-box-header { background: var(--border-light); padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  .category-box-name { font-weight: 700; font-size: 15px; }
+  .category-box-name-en { font-size: 14px; color: var(--text-secondary); font-weight: 400; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; margin-left: 8px; }
+  .badge-existing { background: var(--success-bg); color: #166534; }
+  .badge-new { background: var(--warning-bg); color: #92400e; }
+
+  .category-box-content { padding: 14px 18px; }
+  .competence-item { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .field-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .field-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+
+  /* Question cards */
+  .cat-section { margin-bottom: 28px; }
+  .cat-section-title {
+    font-size: 14px; font-weight: 700; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 8px;
+    margin-bottom: 14px; border-bottom: 2px solid var(--border);
+    display: flex; justify-content: space-between;
+  }
+  .category-title-en { font-weight: 400; color: var(--text-muted); font-size: 12px; text-transform: none; letter-spacing: 0; }
+
+  .question-card { background: white; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+  .qcard-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); }
+  .competence-name { font-weight: 700; font-size: 15px; }
+  .competence-name-en { font-weight: 400; font-size: 14px; color: var(--text-secondary); }
+  .qcard-status { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-xs); }
+  .qcard-status-complete { background: var(--success-bg); color: #166534; }
+  .qcard-status-empty { background: var(--border-light); color: var(--text-muted); }
+  .qcard-body { padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .question-row { display: flex; flex-direction: column; gap: 6px; }
+  .question-label { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; color: var(--text-secondary); }
+  .question-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .question-icon-not { background: var(--danger-bg); color: var(--danger); }
+  .question-icon-yes { background: var(--success-bg); color: var(--success); }
+  textarea.q { min-height: 60px; }
+
+  /* OLD style for comparison */
+  .old-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--success); font-weight: 500; margin-left: 8px; opacity: 0.8; }
+
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .comparison > div { }
+  .comp-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; padding: 6px 12px; background: var(--border-light); border-radius: 8px; text-align: center; }
+  .comp-label.old { color: var(--danger); background: var(--danger-bg); }
+  .comp-label.new { color: var(--success); background: var(--success-bg); }
+
+  @media (max-width: 768px) { .comparison { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div>
+  <h1>Mockup: Inline EN Vertalingen</h1>
+  <p class="subtitle">Vergelijking oud (badge) vs nieuw (inline preview) voor EN vertalingen</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- STEP 1: Assessment Info -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size: 16px; color: var(--text-secondary);">Stap 1: Assessment Info</h2>
+<div class="comparison">
+  <!-- OLD -->
+  <div>
+    <div class="comp-label old">OUD (badge)</div>
+    <div class="panel">
+      <div class="form-group">
+        <label class="form-label">Assessment naam</label>
+        <input value="Persoonlijk Leiderschap" readonly>
+        <span class="old-badge">EN: vertaald</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Beschrijving</label>
+        <textarea rows="3" readonly>Een assessment gericht op persoonlijk leiderschap en zelfreflectie.</textarea>
+        <span class="old-badge">EN: vertaald</span>
+      </div>
+    </div>
+  </div>
+  <!-- NEW -->
+  <div>
+    <div class="comp-label new">NIEUW (inline)</div>
+    <div class="panel">
+      <div class="form-group">
+        <label class="form-label">Assessment naam</label>
+        <input value="Persoonlijk Leiderschap" readonly>
+        <div class="en-inline-wrapper">
+          <span class="en-inline-label">EN</span>
+          <input class="en-inline" value="Personal Leadership" readonly>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Beschrijving</label>
+        <textarea rows="3" readonly>Een assessment gericht op persoonlijk leiderschap en zelfreflectie.</textarea>
+        <div class="en-inline-wrapper">
+          <span class="en-inline-label">EN</span>
+          <textarea class="en-inline" rows="2" readonly>An assessment focused on personal leadership and self-reflection.</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- STEP 2: Competenties -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size: 16px; color: var(--text-secondary);">Stap 2: Competenties</h2>
+<div class="comparison">
+  <!-- OLD -->
+  <div>
+    <div class="comp-label old">OUD (badge)</div>
+    <div class="panel">
+      <div class="category-box">
+        <div class="category-box-header">
+          <span class="category-box-name">Communicatie</span>
+          <span class="old-badge">EN: vertaald</span>
+          <span class="badge badge-existing" style="font-size:10px; padding:2px 6px;">Bestaand</span>
+        </div>
+        <div class="category-box-content">
+          <div class="competence-item">
+            <div class="field-header">
+              <span class="field-label">Competentie</span>
+              <span class="badge badge-new">+ Nieuw</span>
+              <span class="old-badge">EN: vertaald</span>
+            </div>
+            <input value="Actief luisteren" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- NEW -->
+  <div>
+    <div class="comp-label new">NIEUW (inline)</div>
+    <div class="panel">
+      <div class="category-box">
+        <div class="category-box-header">
+          <span class="category-box-name">Communicatie <span class="category-box-name-en">/ Communication</span></span>
+          <span class="badge badge-existing" style="font-size:10px; padding:2px 6px;">Bestaand</span>
+        </div>
+        <div class="category-box-content">
+          <div class="competence-item">
+            <div class="field-header">
+              <span class="field-label">Competentie</span>
+              <span class="badge badge-new">+ Nieuw</span>
+            </div>
+            <input value="Actief luisteren" readonly>
+            <div class="en-inline-wrapper">
+              <span class="en-inline-label">EN</span>
+              <input class="en-inline" value="Active listening" readonly>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- STEP 3: Vragen -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size: 16px; color: var(--text-secondary);">Stap 3: Vragen per Competentie</h2>
+<div class="comparison">
+  <!-- OLD -->
+  <div>
+    <div class="comp-label old">OUD (badge + toggle naar EN)</div>
+    <div class="panel">
+      <div class="cat-section">
+        <div class="cat-section-title">
+          <span>COMMUNICATIE</span>
+          <span style="font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;">1 van 1 ingevuld</span>
+        </div>
+        <div class="question-card">
+          <div class="qcard-header">
+            <h4 class="competence-name">Actief luisteren</h4>
+            <span class="qcard-status qcard-status-complete">Volledig</span>
+          </div>
+          <div class="qcard-body">
+            <div class="question-row">
+              <div class="question-label">
+                <span class="question-icon question-icon-not">&#10007;</span>
+                <span>Niet-vraag</span>
+              </div>
+              <textarea rows="2" readonly>Luistert niet naar anderen en onderbreekt gesprekken</textarea>
+              <p style="font-size:11px; color:var(--text-muted); margin-top:4px; font-style:italic;">
+                (EN vertaling verborgen — switch naar EN tab om te zien)
+              </p>
+            </div>
+            <div class="question-row">
+              <div class="question-label">
+                <span class="question-icon question-icon-yes">&#10003;</span>
+                <span>Wel-vraag</span>
+              </div>
+              <textarea rows="2" readonly>Luistert aandachtig en toont begrip voor de ander</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- NEW -->
+  <div>
+    <div class="comp-label new">NIEUW (inline)</div>
+    <div class="panel">
+      <div class="cat-section">
+        <div class="cat-section-title">
+          <span>COMMUNICATIE <span class="category-title-en">/ Communication</span></span>
+          <span style="font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;">1 van 1 ingevuld</span>
+        </div>
+        <div class="question-card">
+          <div class="qcard-header">
+            <h4 class="competence-name">Actief luisteren <span class="competence-name-en">/ Active listening</span></h4>
+            <span class="qcard-status qcard-status-complete">Volledig</span>
+          </div>
+          <div class="qcard-body">
+            <div class="question-row">
+              <div class="question-label">
+                <span class="question-icon question-icon-not">&#10007;</span>
+                <span>Niet-vraag</span>
+              </div>
+              <textarea rows="2" readonly>Luistert niet naar anderen en onderbreekt gesprekken</textarea>
+              <div class="en-inline-wrapper">
+                <span class="en-inline-label">EN</span>
+                <textarea class="en-inline" rows="1" readonly>Does not listen to others and interrupts conversations</textarea>
+              </div>
+            </div>
+            <div class="question-row">
+              <div class="question-label">
+                <span class="question-icon question-icon-yes">&#10003;</span>
+                <span>Wel-vraag</span>
+              </div>
+              <textarea rows="2" readonly>Luistert aandachtig en toont begrip voor de ander</textarea>
+              <div class="en-inline-wrapper">
+                <span class="en-inline-label">EN</span>
+                <textarea class="en-inline" rows="1" readonly>Listens attentively and shows understanding for others</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- Lege EN velden -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size: 16px; color: var(--text-secondary);">Lege EN velden (nog niet vertaald)</h2>
+<div class="panel">
+  <div class="form-group">
+    <label class="form-label">Assessment naam</label>
+    <input value="Nieuwe Assessment" readonly>
+    <div class="en-inline-wrapper">
+      <span class="en-inline-label">EN</span>
+      <input class="en-inline" placeholder="Engelse vertaling...">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Beschrijving</label>
+    <textarea rows="2" readonly>Dit is een test assessment</textarea>
+    <div class="en-inline-wrapper">
+      <span class="en-inline-label">EN</span>
+      <textarea class="en-inline" rows="2" class="translating" style="background:#f0f9ff;border-color:#7dd3fc;" placeholder="Wordt vertaald..."></textarea>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

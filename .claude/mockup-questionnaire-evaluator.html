@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MentesMe - Vragenlijst</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --mm-blue: #1e3a5f;
+    --mm-blue-light: #2a5080;
+    --mm-blue-lighter: #e8eef5;
+    --mm-blue-bg: #f0f4f8;
+    --mm-accent: #3b82f6;
+    --mm-accent-light: #dbeafe;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --shadow: 0 4px 24px rgba(15,23,42,0.06);
+    --shadow-lg: 0 12px 40px rgba(15,23,42,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Mockup Banner ── */
+  .mockup-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: linear-gradient(135deg, #1e3a5f, #2a5080);
+    color: white; padding: 10px 24px;
+    display: flex; justify-content: center; align-items: center; gap: 16px;
+    font-size: 13px; font-weight: 600;
+  }
+  .mockup-banner span { opacity: 0.7; font-weight: 400; }
+  body { padding-top: 42px; }
+
+  /* ── Hero Header ── */
+  .hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2a5080 40%, #3b6998 100%);
+    color: white; padding: 48px 24px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-content { position: relative; max-width: 640px; margin: 0 auto; }
+  .hero-logo {
+    width: 56px; height: 56px; background: rgba(255,255,255,0.15);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; font-size: 24px; font-weight: 700;
+    backdrop-filter: blur(8px); letter-spacing: -0.5px;
+  }
+  .hero h1 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
+  .hero-instruction {
+    font-size: 14px; opacity: 0.85; max-width: 520px; margin: 0 auto;
+    line-height: 1.7;
+  }
+  .hero-meta {
+    margin-top: 24px; display: flex; justify-content: center; gap: 28px;
+    font-size: 13px; opacity: 0.65;
+  }
+  .hero-meta-item { display: flex; align-items: center; gap: 6px; }
+
+  /* ── Progress Bar ── */
+  .progress-container {
+    max-width: 720px; margin: -20px auto 0; padding: 0 24px;
+    position: relative; z-index: 10;
+  }
+  .progress-card {
+    background: var(--card); border-radius: 14px; padding: 18px 24px;
+    box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .progress-info { flex-shrink: 0; }
+  .progress-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .progress-text { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .progress-bar-bg {
+    flex: 1; height: 8px; background: var(--border-light);
+    border-radius: 4px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--mm-blue), var(--mm-accent));
+    transition: width 0.5s ease;
+  }
+  .progress-pct {
+    font-size: 15px; font-weight: 700; color: var(--mm-blue);
+    min-width: 42px; text-align: right;
+  }
+
+  /* ── Section ── */
+  .section-container { max-width: 720px; margin: 0 auto; padding: 32px 24px 0; }
+  .section-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  }
+  .section-badge {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--mm-blue-lighter); color: var(--mm-blue);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; flex-shrink: 0;
+  }
+  .section-title { font-size: 18px; font-weight: 700; }
+  .section-subtitle { font-size: 13px; color: var(--text-secondary); font-weight: 400; }
+  .section-count { font-size: 12px; color: var(--text-muted); }
+
+  /* ── Question Card ── */
+  .question-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .question-card {
+    background: var(--card); border-radius: 16px;
+    box-shadow: var(--shadow); overflow: hidden;
+    transition: all 0.25s ease; border: 2px solid transparent;
+  }
+  .question-card:hover { box-shadow: var(--shadow-lg); }
+  .question-card.answered { border-color: var(--mm-blue); }
+  .question-card.answered .q-num { background: var(--mm-blue-lighter); color: var(--mm-blue); }
+
+  .question-inner { padding: 24px; }
+
+  /* ── Question Header ── */
+  .question-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  }
+  .q-num {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--border-light); color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .q-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  /* ── Scale Labels ── */
+  .scale-labels {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 24px; margin-bottom: 14px;
+  }
+  .scale-label-left, .scale-label-right {
+    flex: 1; font-size: 14px; line-height: 1.5;
+  }
+  .scale-label-left {
+    color: var(--text-muted); text-align: left; font-weight: 400;
+    padding-right: 8px;
+  }
+  .scale-label-right {
+    color: var(--text); text-align: right; font-weight: 600;
+    padding-left: 8px;
+  }
+
+  /* ── 6-Point Scale ── */
+  .scale-wrapper { position: relative; padding: 8px 0; }
+
+  .scale-track-line {
+    position: absolute; top: 50%; left: 28px; right: 28px;
+    height: 3px; background: var(--border); border-radius: 2px;
+    transform: translateY(-50%);
+  }
+  .scale-track-fill {
+    position: absolute; top: 0; left: 0; height: 100%;
+    background: var(--mm-blue); border-radius: 2px;
+    transition: width 0.3s ease; width: 0;
+  }
+
+  .scale-options {
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 1;
+  }
+
+  .scale-option {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; cursor: pointer; padding: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .scale-dot {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 2.5px solid var(--border); background: white;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease; position: relative;
+    font-size: 13px; font-weight: 600; color: transparent;
+  }
+
+  .scale-option:hover .scale-dot {
+    border-color: var(--mm-blue); transform: scale(1.12);
+    box-shadow: 0 0 0 5px rgba(30,58,95,0.08);
+    color: var(--mm-blue);
+  }
+  .scale-option.selected .scale-dot {
+    border-color: var(--mm-blue); background: var(--mm-blue);
+    box-shadow: 0 0 0 5px rgba(30,58,95,0.12);
+    transform: scale(1.12); color: white;
+  }
+
+  .scale-value {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .scale-option:hover .scale-value { color: var(--mm-blue); }
+  .scale-option.selected .scale-value { color: var(--mm-blue); font-weight: 700; }
+
+  /* Scale size variation: outer smaller, inner bigger */
+  .scale-option:nth-child(1) .scale-dot,
+  .scale-option:nth-child(6) .scale-dot { width: 32px; height: 32px; font-size: 11px; }
+  .scale-option:nth-child(2) .scale-dot,
+  .scale-option:nth-child(5) .scale-dot { width: 36px; height: 36px; font-size: 12px; }
+  .scale-option:nth-child(3) .scale-dot,
+  .scale-option:nth-child(4) .scale-dot { width: 42px; height: 42px; font-size: 14px; }
+
+  /* Scale endpoint labels */
+  .scale-endpoints {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    padding: 0 4px;
+  }
+
+  /* ── Section Divider ── */
+  .section-divider {
+    max-width: 720px; margin: 28px auto 0; padding: 0 24px;
+  }
+  .section-divider hr { border: none; height: 1px; background: var(--border); }
+
+  /* ── Footer ── */
+  .footer-container { max-width: 720px; margin: 0 auto; padding: 32px 24px 48px; }
+  .footer-card {
+    background: var(--card); border-radius: 14px; padding: 20px 24px;
+    box-shadow: var(--shadow);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-btn {
+    border: none; border-radius: 12px; padding: 12px 28px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    font-size: 14px; transition: all 0.15s;
+  }
+  .footer-btn.next {
+    background: var(--mm-blue); color: white;
+  }
+  .footer-btn.next:hover {
+    background: var(--mm-blue-light);
+    box-shadow: 0 4px 12px rgba(30,58,95,0.25);
+  }
+  .footer-btn.prev { background: var(--border-light); color: var(--text-secondary); }
+  .footer-btn.prev:hover { background: var(--border); }
+
+  /* ── Powered by ── */
+  .powered-by {
+    text-align: center; padding: 0 24px 32px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .powered-by a { color: var(--mm-blue); text-decoration: none; font-weight: 600; }
+
+  /* ── Mobile ── */
+  @media (max-width: 600px) {
+    .hero { padding: 32px 16px; }
+    .hero h1 { font-size: 21px; }
+    .hero-instruction { font-size: 13px; }
+    .hero-meta { flex-direction: column; gap: 6px; }
+    .section-container { padding: 24px 16px 0; }
+    .question-inner { padding: 18px; }
+    .scale-labels { gap: 12px; }
+    .scale-label-left, .scale-label-right { font-size: 13px; }
+    .scale-option:nth-child(1) .scale-dot,
+    .scale-option:nth-child(6) .scale-dot { width: 28px; height: 28px; }
+    .scale-option:nth-child(2) .scale-dot,
+    .scale-option:nth-child(5) .scale-dot { width: 32px; height: 32px; }
+    .scale-option:nth-child(3) .scale-dot,
+    .scale-option:nth-child(4) .scale-dot { width: 36px; height: 36px; }
+    .footer-container { padding: 24px 16px 32px; }
+    .footer-card { flex-direction: column; gap: 10px; }
+    .footer-btn { width: 100%; text-align: center; }
+    .progress-card { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mockup Banner -->
+<div class="mockup-banner">
+  MentesMe Questionnaire Mockup
+  <span>- 6-puntsschaal, klik om te testen</span>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-logo">M</div>
+    <h1>Leiderschap Assessment 2026</h1>
+    <p class="hero-instruction">
+      Deze vragenlijst is bedoeld om uw leiderschapscompetenties te bepalen.
+      Geef voor elke stelling aan in hoeverre dit van toepassing is op de persoon die u beoordeelt.
+    </p>
+    <div class="hero-meta">
+      <span class="hero-meta-item">19 vragen</span>
+      <span class="hero-meta-item">~10 minuten</span>
+      <span class="hero-meta-item">Anoniem</span>
+    </div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="progress-container">
+  <div class="progress-card">
+    <div class="progress-info">
+      <div class="progress-label">Voortgang</div>
+      <div class="progress-text" id="progressText">0 van 7 beantwoord</div>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+</div>
+
+<!-- Section 1: Leiderschap -->
+<div class="section-container">
+  <div class="section-header">
+    <div class="section-badge">1</div>
+    <div>
+      <div class="section-title">Leiderschap</div>
+      <div class="section-subtitle">Vragen 1 - 4</div>
+    </div>
+  </div>
+
+  <div class="question-list">
+
+    <!-- Q1 -->
+    <div class="question-card" id="q1">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">1</div>
+          <div class="q-label">Besluitvaardigheid</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Neemt geen beslissingen wanneer dat nodig is</div>
+          <div class="scale-label-right">Neemt tijdig en onderbouwd beslissingen</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="question-card" id="q2">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">2</div>
+          <div class="q-label">Delegeren</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Houdt alle taken bij zichzelf en deelt niet</div>
+          <div class="scale-label-right">Draagt taken en verantwoordelijkheden effectief over</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="question-card" id="q3">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">3</div>
+          <div class="q-label">Visie</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Geeft geen duidelijke richting of toekomstvisie</div>
+          <div class="scale-label-right">Inspireert met een helder en motiverend toekomstbeeld</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="question-card" id="q4">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">4</div>
+          <div class="q-label">Coaching</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Besteedt geen aandacht aan de ontwikkeling van teamleden</div>
+          <div class="scale-label-right">Begeleidt en stimuleert actief de groei van teamleden</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-divider"><hr /></div>
+
+<!-- Section 2: Samenwerking -->
+<div class="section-container">
+  <div class="section-header">
+    <div class="section-badge">2</div>
+    <div>
+      <div class="section-title">Samenwerking</div>
+      <div class="section-subtitle">Vragen 5 - 7</div>
+    </div>
+  </div>
+
+  <div class="question-list">
+
+    <!-- Q5 -->
+    <div class="question-card" id="q5">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">5</div>
+          <div class="q-label">Teamwork</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Werkt het liefst alleen en betrekt anderen niet</div>
+          <div class="scale-label-right">Werkt actief samen en draagt bij aan het teamresultaat</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="question-card" id="q6">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">6</div>
+          <div class="q-label">Communicatie</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Communiceert niet helder naar anderen</div>
+          <div class="scale-label-right">Communiceert helder en effectief met alle betrokkenen</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="question-card" id="q7">
+      <div class="question-inner">
+        <div class="question-top">
+          <div class="q-num">7</div>
+          <div class="q-label">Conflicthantering</div>
+        </div>
+        <div class="scale-labels">
+          <div class="scale-label-left">Vermijdt conflicten en laat problemen voortbestaan</div>
+          <div class="scale-label-right">Pakt conflicten constructief aan en zoekt oplossingen</div>
+        </div>
+        <div class="scale-wrapper">
+          <div class="scale-track-line"><div class="scale-track-fill"></div></div>
+          <div class="scale-options">
+            <div class="scale-option" onclick="select(this,1)"><div class="scale-dot">1</div></div>
+            <div class="scale-option" onclick="select(this,2)"><div class="scale-dot">2</div></div>
+            <div class="scale-option" onclick="select(this,3)"><div class="scale-dot">3</div></div>
+            <div class="scale-option" onclick="select(this,4)"><div class="scale-dot">4</div></div>
+            <div class="scale-option" onclick="select(this,5)"><div class="scale-dot">5</div></div>
+            <div class="scale-option" onclick="select(this,6)"><div class="scale-dot">6</div></div>
+          </div>
+        </div>
+        <div class="scale-endpoints">
+          <span>Helemaal niet</span>
+          <span>Helemaal wel</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer-container">
+  <div class="footer-card">
+    <button class="footer-btn prev" onclick="alert('Vorige sectie')">Vorige</button>
+    <button class="footer-btn next" onclick="alert('Volgende sectie')">Volgende &rarr;</button>
+  </div>
+</div>
+
+<div class="powered-by">
+  Powered by <a href="#">MentesMe</a> Metro Platform
+</div>
+
+<script>
+function select(el, value) {
+  const card = el.closest('.question-card');
+  const options = card.querySelectorAll('.scale-option');
+
+  // Clear previous
+  options.forEach(o => o.classList.remove('selected'));
+
+  // Select clicked
+  el.classList.add('selected');
+
+  // Mark card answered
+  card.classList.add('answered');
+
+  // Animate track fill
+  const fill = card.querySelector('.scale-track-fill');
+  const pct = ((value - 1) / 5) * 100;
+  fill.style.width = pct + '%';
+
+  // Update progress
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = document.querySelectorAll('.question-card').length;
+  const answered = document.querySelectorAll('.question-card.answered').length;
+  const pct = Math.round((answered / total) * 100);
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressText').textContent =
+    answered + ' van ' + total + ' beantwoord';
+}
+</script>
+
+</body>
+</html>

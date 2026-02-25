@@ -4,3 +4,6 @@ backend/target/
 .DS_Store
 .env
 .aider*
+.claude/settings.local.json
+.claude/plans/
+.claude/projects/

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning Journey Builder — Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+          colors: {
+            sand:  { 50:'#FAF9F6',100:'#F4F2ED',200:'#E9E6DF',300:'#DBD7CE',400:'#C1BBB0',500:'#9F9A8F',600:'#7D796F',700:'#5C5950',800:'#3B3935',900:'#25231F' },
+            sage:  { 50:'#F0F5F1',100:'#DCE8DE',200:'#B8D1BC',300:'#8FB896',400:'#6B9E74',500:'#548A5E',600:'#43704C',700:'#375C3F',800:'#2E4B34',900:'#263E2C' },
+            steel: { 50:'#EFF3F8',100:'#DCE5EF',200:'#B8CADD',300:'#8DABC4',400:'#6B90B0',500:'#547C9B',600:'#43647F',700:'#375268',800:'#2E4356',900:'#263847' },
+            iris:  { 50:'#F3F0F8',100:'#E4DEF0',200:'#C9BDE1',300:'#A896CC',400:'#8E7BBA',500:'#7B66A9',600:'#65528D',700:'#534474',800:'#443860',900:'#382F4F' },
+          },
+          boxShadow: {
+            'warm-sm': '0 1px 2px 0 rgba(37,35,31,0.04), 0 1px 3px 0 rgba(37,35,31,0.06)',
+            'warm':    '0 1px 3px 0 rgba(37,35,31,0.06), 0 4px 8px -1px rgba(37,35,31,0.06)',
+            'warm-md': '0 2px 6px 0 rgba(37,35,31,0.06), 0 6px 16px -2px rgba(37,35,31,0.08)',
+            'warm-lg': '0 4px 12px 0 rgba(37,35,31,0.06), 0 12px 28px -4px rgba(37,35,31,0.10)',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { background: #FAF9F6; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #DBD7CE; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #C1BBB0; }
+    .chevron-open { transform: rotate(90deg); }
+    .step-body-enter { animation: slideDown 0.2s ease-out; }
+    @keyframes slideDown { from { opacity:0; max-height:0; } to { opacity:1; max-height:800px; } }
+  </style>
+</head>
+<body class="font-sans text-sand-900 min-h-screen">
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+
+// ─────────────────────────────────────────────────────────────────
+// Mock data
+// ─────────────────────────────────────────────────────────────────
+
+const MOCK_STEPS = [
+  {
+    type: 'hoofdstap',
+    title: 'Introductie',
+    text: 'Welkom bij je persoonlijke ontwikkelreis. In deze stap maak je kennis met het programma en stel je je leerdoelen vast.',
+    questions: [],
+    chatbox: false,
+    docs: 0,
+  },
+  {
+    type: 'hoofdstap',
+    title: 'Zelfreflectie',
+    text: 'Sta stil bij je sterke punten en ontwikkelpunten. Gebruik de reflectie-oefeningen om inzicht te krijgen in je professionele identiteit.',
+    questions: [],
+    chatbox: false,
+    docs: 0,
+  },
+  {
+    type: 'substap',
+    title: 'Verdieping: kernkwaliteiten',
+    text: 'Onderzoek je kernkwaliteiten aan de hand van het kernkwadranten-model.',
+    questions: [
+      'Wat zijn de drie situaties waarin je je het meest competent voelde het afgelopen halfjaar?',
+      'Hoe reageer je wanneer je onverwachte feedback ontvangt van collega\'s?',
+    ],
+    chatbox: true,
+    docs: 0,
+  },
+  {
+    type: 'substap',
+    title: 'Feedback verzamelen',
+    text: 'Vraag gerichte feedback aan minimaal twee collega\'s en je leidinggevende.',
+    questions: [],
+    chatbox: false,
+    docs: 1,
+  },
+  {
+    type: 'hoofdstap',
+    title: 'Actieplan',
+    text: 'Maak een concreet actieplan op basis van je reflecties en ontvangen feedback. Formuleer SMART-doelen.',
+    questions: [],
+    chatbox: true,
+    docs: 0,
+  },
+  {
+    type: 'afsluiting',
+    title: 'Afsluiting & evaluatie',
+    text: 'Evalueer je groei gedurende het programma en stel nieuwe ontwikkeldoelen vast voor de toekomst.',
+    questions: [],
+    chatbox: false,
+    docs: 0,
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────
+// Color / style maps
+// ─────────────────────────────────────────────────────────────────
+
+const TYPE_STYLE = {
+  hoofdstap: {
+    dot: 'bg-sage-500',
+    dotRing: 'ring-sage-100',
+    border: 'border-l-sage-400',
+    badgeBg: 'bg-sage-50',
+    badgeText: 'text-sage-700',
+    badgeBorder: 'border-sage-200',
+    label: 'Hoofdstap',
+    line: 'bg-sage-200',
+    previewDot: 'bg-sage-500',
+  },
+  substap: {
+    dot: 'bg-steel-500',
+    dotRing: 'ring-steel-100',
+    border: 'border-l-steel-400',
+    badgeBg: 'bg-steel-50',
+    badgeText: 'text-steel-700',
+    badgeBorder: 'border-steel-200',
+    label: 'Substap',
+    line: 'bg-steel-200',
+    previewDot: 'bg-steel-400',
+  },
+  afsluiting: {
+    dot: 'bg-iris-500',
+    dotRing: 'ring-iris-100',
+    border: 'border-l-iris-400',
+    badgeBg: 'bg-iris-50',
+    badgeText: 'text-iris-700',
+    badgeBorder: 'border-iris-200',
+    label: 'Afsluiting',
+    line: 'bg-iris-200',
+    previewDot: 'bg-iris-400',
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// Icons (inline SVG)
+// ─────────────────────────────────────────────────────────────────
+
+const Icon = ({ d, size = 16, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+       strokeLinejoin="round" className={className}>
+    <path d={d} />
+  </svg>
+);
+
+const ChevronRight = ({ className }) => <Icon d="M9 18l6-6-6-6" className={className} />;
+const ArrowUp      = ({ className }) => <Icon d="M12 19V5M5 12l7-7 7 7" className={className} />;
+const ArrowDown    = ({ className }) => <Icon d="M12 5v14M19 12l-7 7-7-7" className={className} />;
+const XIcon        = ({ className }) => <Icon d="M18 6L6 18M6 6l12 12" className={className} />;
+const PlusIcon     = ({ className }) => <Icon d="M12 5v14M5 12h14" className={className} />;
+const ChatIcon     = ({ className }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+  </svg>
+);
+const DocIcon = ({ className }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+const GlobeIcon = ({ className }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+  </svg>
+);
+
+// ─────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────
+
+function Badge({ type }) {
+  const s = TYPE_STYLE[type];
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${s.badgeBg} ${s.badgeText} ${s.badgeBorder}`}>
+      {s.label}
+    </span>
+  );
+}
+
+function ActionButton({ children, disabled, danger, title }) {
+  return (
+    <button disabled={disabled} title={title}
+      className={`p-1 rounded-md transition-colors duration-150
+        ${disabled ? 'text-sand-300 cursor-not-allowed' :
+          danger ? 'text-sand-400 hover:text-red-500 hover:bg-red-50' :
+                   'text-sand-400 hover:text-sand-700 hover:bg-sand-100'}`}>
+      {children}
+    </button>
+  );
+}
+
+function FormLabel({ children, hint }) {
+  return (
+    <label className="block mb-1.5">
+      <span className="text-sm font-medium text-sand-700">{children}</span>
+      {hint && <span className="text-xs text-sand-400 ml-2">{hint}</span>}
+    </label>
+  );
+}
+
+function TextInput({ value, placeholder }) {
+  return (
+    <input type="text" value={value} readOnly placeholder={placeholder}
+      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-sand-200 bg-white
+                 text-sand-900 placeholder-sand-400
+                 focus:outline-none focus:ring-2 focus:ring-sage-200 focus:border-sage-300
+                 transition-all duration-150 shadow-warm-sm" />
+  );
+}
+
+function TextArea({ value, placeholder, rows = 3 }) {
+  return (
+    <textarea value={value} readOnly placeholder={placeholder} rows={rows}
+      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-sand-200 bg-white
+                 text-sand-900 placeholder-sand-400 resize-none
+                 focus:outline-none focus:ring-2 focus:ring-sage-200 focus:border-sage-300
+                 transition-all duration-150 shadow-warm-sm" />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Step accordion card
+// ─────────────────────────────────────────────────────────────────
+
+function StepCard({ step, index, total, isOpen, onToggle }) {
+  const s = TYPE_STYLE[step.type];
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+
+  return (
+    <div className={`rounded-2xl border transition-all duration-200
+      ${isOpen ? `bg-white shadow-warm-md border-sand-200 ${s.border} border-l-[3px]` :
+                 `bg-white shadow-warm-sm border-sand-200/80 ${s.border} border-l-[3px] hover:shadow-warm hover:border-sand-200`}`}>
+
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none" onClick={onToggle}>
+        <ChevronRight className={`w-4 h-4 text-sand-400 transition-transform duration-200 flex-shrink-0
+          ${isOpen ? 'chevron-open' : ''}`} />
+
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 ${s.dot}`}>
+          {index + 1}
+        </div>
+
+        <span className={`text-sm font-medium flex-1 min-w-0 truncate ${step.title ? 'text-sand-800' : 'text-sand-400 italic'}`}>
+          {step.title || 'Geen titel'}
+        </span>
+
+        <Badge type={step.type} />
+
+        <div className="flex items-center gap-0.5 ml-1" onClick={e => e.stopPropagation()}>
+          <ActionButton disabled={isFirst} title="Omhoog"><ArrowUp /></ActionButton>
+          <ActionButton disabled={isLast} title="Omlaag"><ArrowDown /></ActionButton>
+          <ActionButton danger disabled={step.type === 'afsluiting'} title="Verwijder"><XIcon /></ActionButton>
+        </div>
+      </div>
+
+      {/* Body (expanded) */}
+      {isOpen && (
+        <div className="px-5 pb-5 pt-1 border-t border-sand-100 step-body-enter">
+          <div className="ml-[44px] space-y-5">
+
+            {/* Title input */}
+            <div>
+              <FormLabel>Titel</FormLabel>
+              <TextInput value={step.title} placeholder="Voer een staptitel in..." />
+            </div>
+
+            {/* Text content */}
+            <div>
+              <FormLabel hint="Optioneel">Toelichting</FormLabel>
+              <TextArea value={step.text} placeholder="Voeg een beschrijving of instructie toe..." rows={3} />
+            </div>
+
+            {/* Chatbox toggle */}
+            <div className="flex items-center gap-3">
+              <button className={`relative w-10 h-[22px] rounded-full transition-colors duration-200
+                ${step.chatbox ? 'bg-sage-500' : 'bg-sand-300'}`}>
+                <span className={`absolute top-[3px] w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200
+                  ${step.chatbox ? 'left-[22px]' : 'left-[3px]'}`} />
+              </button>
+              <span className="text-sm text-sand-600">Chatbox inschakelen</span>
+              {step.chatbox && <ChatIcon className="text-sage-500" />}
+            </div>
+
+            {/* Questions (substap only) */}
+            {step.type === 'substap' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <FormLabel>Reflectievragen ({step.questions.length})</FormLabel>
+                </div>
+
+                {step.questions.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {step.questions.map((q, qi) => (
+                      <div key={qi} className="flex items-start gap-2.5">
+                        <span className="mt-2.5 text-xs font-medium text-sand-400 w-5 text-right flex-shrink-0">
+                          {qi + 1}.
+                        </span>
+                        <div className="flex-1">
+                          <TextInput value={q} />
+                        </div>
+                        <button className="mt-2 p-1 text-sand-300 hover:text-red-400 transition-colors">
+                          <XIcon />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-sand-200 bg-sand-50/50 px-4 py-3 text-center">
+                    <p className="text-sm text-sand-400">Nog geen reflectievragen toegevoegd.</p>
+                  </div>
+                )}
+
+                <button className="inline-flex items-center gap-1.5 text-sm font-medium text-steel-600 hover:text-steel-700 transition-colors">
+                  <PlusIcon className="w-3.5 h-3.5" />
+                  Vraag toevoegen
+                </button>
+
+                <p className="text-xs text-sand-400">
+                  Maximaal 5 reflectievragen per substap.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Preview — Metro-style vertical timeline
+// ─────────────────────────────────────────────────────────────────
+
+function computeStepLabels(steps) {
+  let mainNum = 0, subNum = 0;
+  return steps.map(step => {
+    const isSub = step.type === 'substap';
+    if (!isSub) { mainNum++; subNum = 0; }
+    else { subNum++; }
+    return {
+      ...step,
+      label: isSub ? `${mainNum}.${subNum}` : `${mainNum}.`,
+      isSub,
+    };
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────────
+
+function LearningJourneyBuilder() {
+  const [activeLang, setActiveLang] = React.useState('nl');
+  const [openStep, setOpenStep] = React.useState(2);
+
+  return (
+    <div className="h-screen flex flex-col bg-sand-50">
+
+      {/* ── Header ────────────────────────────────────── */}
+      <header className="flex-shrink-0 bg-white border-b border-sand-200 shadow-warm-sm">
+        <div className="flex items-center justify-between px-6 py-3.5">
+
+          {/* Left: back + title */}
+          <div className="flex items-center gap-4">
+            <button className="flex items-center gap-1.5 text-sm text-sand-500 hover:text-sand-700 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Terug
+            </button>
+            <div className="h-5 w-px bg-sand-200" />
+            <h1 className="text-lg font-semibold text-sand-900 tracking-tight">
+              Learning Journey Builder
+            </h1>
+          </div>
+
+          {/* Center: lang toggle */}
+          <div className="flex items-center gap-1 bg-sand-100 rounded-xl p-1">
+            {['nl', 'en'].map(lang => (
+              <button key={lang} onClick={() => setActiveLang(lang)}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+                  ${activeLang === lang
+                    ? 'bg-white text-sand-900 shadow-warm-sm'
+                    : 'text-sand-500 hover:text-sand-700'}`}>
+                <GlobeIcon className={activeLang === lang ? 'text-sage-500' : 'text-sand-400'} />
+                {lang.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: publish */}
+          <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-sage-500 hover:bg-sage-600
+                             text-white text-sm font-medium rounded-xl shadow-warm-sm
+                             transition-all duration-200 hover:shadow-warm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+            </svg>
+            Publiceer naar test
+          </button>
+        </div>
+      </header>
+
+      {/* ── Split pane ────────────────────────────────── */}
+      <div className="flex-1 flex min-h-0">
+
+        {/* ── LEFT: Editor ──────────────────────────── */}
+        <div className="w-[55%] border-r border-sand-200 overflow-y-auto scrollbar-thin">
+          <div className="max-w-2xl mx-auto px-8 py-8 space-y-8">
+
+            {/* Journey metadata */}
+            <div className="space-y-5">
+              <div>
+                <FormLabel>Naam van de learning journey</FormLabel>
+                <TextInput value="Persoonlijke Ontwikkeling" placeholder="Bijv. Leiderschapstraject Q3 2026" />
+              </div>
+
+              <div>
+                <FormLabel hint="Wordt getoond op de overzichtspagina">Beschrijving</FormLabel>
+                <TextArea
+                  value="Een learning journey gericht op zelfinzicht, professionele groei en het ontwikkelen van leiderschapskwaliteiten binnen de organisatie."
+                  rows={3} />
+              </div>
+
+              <div>
+                <FormLabel>Groepen</FormLabel>
+                <div className="flex flex-wrap items-center gap-2 w-full px-3.5 py-2.5 rounded-xl border border-sand-200 bg-white shadow-warm-sm min-h-[42px]">
+                  <span className="inline-flex items-center gap-1.5 bg-sage-50 text-sage-700 border border-sage-200 rounded-lg px-2.5 py-1 text-sm font-medium">
+                    Management Trainees 2026
+                    <button className="text-sage-400 hover:text-sage-600 transition-colors">
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </span>
+                  <input type="text" placeholder="Zoek een groep..." readOnly
+                    className="flex-1 min-w-[120px] bg-transparent text-sm text-sand-900 placeholder-sand-400 outline-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-sand-200" />
+
+            {/* Steps section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-sand-800 tracking-tight">
+                  Stappen
+                  <span className="ml-2 text-sm font-normal text-sand-400">
+                    ({MOCK_STEPS.length})
+                  </span>
+                </h2>
+              </div>
+
+              <div className="space-y-3">
+                {MOCK_STEPS.map((step, i) => (
+                  <StepCard
+                    key={i}
+                    step={step}
+                    index={i}
+                    total={MOCK_STEPS.length}
+                    isOpen={openStep === i}
+                    onToggle={() => setOpenStep(openStep === i ? null : i)}
+                  />
+                ))}
+              </div>
+
+              {/* Add step buttons */}
+              <div className="flex items-center gap-3 pt-1">
+                <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border-2 border-dashed
+                                   border-sand-200 text-sm font-medium text-sand-500
+                                   hover:border-sage-300 hover:text-sage-600 hover:bg-sage-50/50
+                                   transition-all duration-200">
+                  <PlusIcon className="w-4 h-4" />
+                  Hoofdstap
+                </button>
+                <button className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border-2 border-dashed
+                                   border-sand-200 text-sm font-medium text-sand-500
+                                   hover:border-steel-300 hover:text-steel-600 hover:bg-steel-50/50
+                                   transition-all duration-200">
+                  <PlusIcon className="w-4 h-4" />
+                  Substap
+                </button>
+              </div>
+            </div>
+
+            {/* Publish footer */}
+            <div className="border-t border-sand-200 pt-6 pb-4">
+              <button className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-sage-500 hover:bg-sage-600
+                                 text-white text-sm font-semibold rounded-xl shadow-warm
+                                 transition-all duration-200 hover:shadow-warm-md">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+                </svg>
+                Publiceer naar testomgeving
+              </button>
+              <p className="text-center text-xs text-sand-400 mt-3 leading-relaxed">
+                Wijzigingen worden opgeslagen in de testomgeving.<br />
+                Publicatie naar productie vereist een aparte goedkeuring.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT: Preview (Metro Learning Route replica) ── */}
+        <div className="w-[45%] bg-white overflow-y-auto scrollbar-thin">
+          <div className="px-6 pt-8 pb-12">
+
+            {/* ── Journey header ── */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-[10px] bg-[#2D6CDF] flex items-center justify-center flex-shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+                </svg>
+              </div>
+              <div>
+                <div className="text-[22px] font-bold text-[#222] leading-tight">
+                  1. Persoonlijke Ontwikkeling
+                </div>
+                <div className="text-[13px] text-[#888] mt-0.5">
+                  Mentor: Jan de Vries
+                </div>
+              </div>
+            </div>
+
+            {/* ── Nav + content area (absolute positioned markers) ── */}
+            {(() => {
+              const rows = computeStepLabels(MOCK_STEPS);
+              const activeIdx = 2;
+              const active = rows[activeIdx];
+
+              // Vertical rhythm: cumulative Y positions
+              const yPos = [];
+              let cy = 0;
+              for (let i = 0; i < rows.length; i++) {
+                if (i > 0) {
+                  const prev = rows[i - 1];
+                  const step = rows[i];
+                  if (!step.isSub && !prev.isSub) cy += 48;
+                  else if (!prev.isSub && step.isSub) cy += 32;
+                  else if (prev.isSub && step.isSub) cy += 28;
+                  else if (prev.isSub && !step.isSub) cy += 44;
+                }
+                yPos.push(cy);
+              }
+
+              const totalHeight = yPos[yPos.length - 1] + 20;
+              const lineX = 200;
+              const labelH = 20;
+
+              const SUB_COLORS = ['#F2994A', '#9B51E0'];
+              let subCounter = 0;
+              const stepColors = rows.map(step => {
+                if (step.type === 'hoofdstap') return '#58B5E3';
+                if (step.type === 'afsluiting') return '#C0C0C0';
+                const c = SUB_COLORS[subCounter % SUB_COLORS.length];
+                subCounter++;
+                return c;
+              });
+
+              // Circle center Y of active step
+              const activeCenterY = yPos[activeIdx] + labelH / 2;
+
+              return (
+                <div className="relative" style={{minHeight:`${totalHeight}px`}}>
+
+                  {/* Vertical line */}
+                  <div className="absolute" style={{
+                    left:`${lineX - 1}px`,
+                    top:`${yPos[0] + 8}px`,
+                    bottom:`${totalHeight - yPos[yPos.length - 1] - 9}px`,
+                    width:'2px',
+                    background:'#D8D8D8',
+                  }} />
+
+                  {/* Step labels + circles */}
+                  {rows.map((step, i) => {
+                    const isActive = i === activeIdx;
+                    const isCompleted = i < activeIdx;
+                    const color = stepColors[i];
+                    const isFilled = isActive || isCompleted;
+
+                    const size = step.type === 'afsluiting' ? 18
+                               : step.isSub ? (isActive ? 12 : 10)
+                               : 16;
+
+                    const labelTrunc = step.title.length > 20
+                      ? step.title.slice(0, 18) + '..'
+                      : step.title;
+
+                    return (
+                      <React.Fragment key={i}>
+                        {/* Label — right-aligned toward circle */}
+                        <div className="absolute" style={{
+                          top:`${yPos[i]}px`,
+                          left: step.isSub ? '12px' : '0',
+                          width:`${lineX - 10 - (step.isSub ? 12 : 0)}px`,
+                          height:'20px',
+                          textAlign:'right',
+                          lineHeight:'20px',
+                          fontSize: step.isSub ? '12px' : '13px',
+                          fontWeight: step.isSub ? 400 : 600,
+                          color: isActive ? '#E8A230' : step.isSub ? '#999' : '#444',
+                          whiteSpace:'nowrap',
+                          overflow:'hidden',
+                          textOverflow:'ellipsis',
+                          cursor:'pointer',
+                        }}>
+                          {step.label} {labelTrunc}
+                        </div>
+
+                        {/* Circle — centered on lineX */}
+                        <div className="absolute" style={{
+                          left:`${lineX}px`,
+                          top:`${yPos[i] + 10 - size / 2}px`,
+                          width:`${size}px`,
+                          height:`${size}px`,
+                          borderRadius:'50%',
+                          background: isFilled ? color : 'white',
+                          border: isFilled ? 'none' : '2px solid #C0C0C0',
+                          transform:'translateX(-50%)',
+                          zIndex:1,
+                        }} />
+                      </React.Fragment>
+                    );
+                  })}
+
+                  {/* ── Content area — top-aligned with first step ── */}
+                  <div className="absolute" style={{
+                    left:'240px',
+                    top:'0',
+                    right:'0',
+                  }}>
+                    {/* Title + Ontdek meer */}
+                    <div className="flex justify-between items-start">
+                      <div style={{lineHeight:'20px'}} className="text-[15px] font-bold text-[#E8A230] uppercase tracking-wide">
+                        {active.label} {active.title}
+                      </div>
+                      <div className="text-[11px] text-[#555] border border-[#CCC] px-2.5 py-1 cursor-pointer flex-shrink-0 ml-2">
+                        Ontdek meer
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-[#E0E0E0] mt-2.5 mb-4" />
+
+                    {/* Body */}
+                    <div className="text-[13px] leading-[1.7] text-[#444]">
+                      <p className="mb-3.5">
+                        {active.text || 'In de lege vakken vul je je antwoorden in.'}
+                      </p>
+
+                      {active.questions && active.questions.length > 0 && (
+                        <p className="font-bold text-[#222] mb-3">
+                          {active.questions[0]}
+                        </p>
+                      )}
+
+                      {active.questions && active.questions.length > 0 && (
+                        <div className="border border-[#CCC] px-3 py-2.5 text-[12px] text-[#888] mb-3.5 leading-normal">
+                          Ik vind het fijn in de ochtend. En ook als ik kan vertellen over wat er in het weekend is gedaan met sporten enzo
+                        </div>
+                      )}
+
+                      {active.questions && active.questions.length > 1 && (
+                        <p className="text-[#555] mb-3.5">
+                          Ben je tevreden over het antwoord ga dan naar "volgende". Je mag me nog een vraag stellen in de chatbox? Ga maar naar de volgende stap als je klaar bent.
+                        </p>
+                      )}
+                    </div>
+
+                    {active.chatbox && (
+                      <div className="mt-2 flex items-center gap-1.5 text-[12px] text-[#666] italic">
+                        <span className="inline-block w-2 h-2 rounded-full bg-[#4CAF50]" />
+                        1 reactie
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+          </div>
+
+          {/* Empty state */}
+          {MOCK_STEPS.length === 0 && (
+            <div className="px-6 py-10 text-center text-[13px] text-[#AAA]">
+              Voeg stappen toe in de editor om hier een voorbeeld te zien.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────────────────────────
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<LearningJourneyBuilder />);
+
+  </script>
+</body>
+</html>
