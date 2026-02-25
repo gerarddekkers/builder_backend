@@ -1,9 +1,11 @@
 package com.mentesme.builder.api;
 
+import com.mentesme.builder.entity.BuilderUser;
 import com.mentesme.builder.model.AssessmentBuildRequest;
 import com.mentesme.builder.model.PublishEnvironment;
 import com.mentesme.builder.model.PublishResult;
 import com.mentesme.builder.service.QuestionnairePublishService;
+import com.mentesme.builder.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -23,20 +25,24 @@ public class QuestionnairePublishController {
     private static final Logger log = LoggerFactory.getLogger(QuestionnairePublishController.class);
 
     private final QuestionnairePublishService publishService;
+    private final UserService userService;
 
-    public QuestionnairePublishController(QuestionnairePublishService publishService) {
+    public QuestionnairePublishController(QuestionnairePublishService publishService, UserService userService) {
         this.publishService = publishService;
+        this.userService = userService;
     }
 
     @PostMapping("/api/questionnaires/publish")
     @ResponseStatus(HttpStatus.CREATED)
-    public PublishResult publish(@Valid @RequestBody AssessmentBuildRequest request) {
+    public PublishResult publish(@Valid @RequestBody AssessmentBuildRequest request, HttpServletRequest httpRequest) {
+        requireAccess(httpRequest, "assessmentTest");
         return publishService.publish(request, PublishEnvironment.TEST);
     }
 
     @PostMapping("/api/questionnaires/publish-test")
     @ResponseStatus(HttpStatus.CREATED)
-    public PublishResult publishTest(@Valid @RequestBody AssessmentBuildRequest request) {
+    public PublishResult publishTest(@Valid @RequestBody AssessmentBuildRequest request, HttpServletRequest httpRequest) {
+        requireAccess(httpRequest, "assessmentTest");
         return publishService.publish(request, PublishEnvironment.TEST);
     }
 
@@ -45,12 +51,31 @@ public class QuestionnairePublishController {
     public PublishResult publishProduction(
             @Valid @RequestBody AssessmentBuildRequest request,
             HttpServletRequest httpRequest) {
-        String role = (String) httpRequest.getAttribute("userRole");
-        if (!"ADMIN".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "ADMIN role required for production publish");
-        }
+        requireAccess(httpRequest, "assessmentProd");
         log.warn("PRODUCTION publish triggered for assessment: {}", request.assessmentName());
         return publishService.publish(request, PublishEnvironment.PRODUCTION);
+    }
+
+    private void requireAccess(HttpServletRequest httpRequest, String flag) {
+        String userIdStr = (String) httpRequest.getAttribute("userId");
+        if (userIdStr == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Geen toegang");
+        }
+        try {
+            long userId = Long.parseLong(userIdStr);
+            BuilderUser user = userService.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Gebruiker niet gevonden"));
+            boolean allowed = switch (flag) {
+                case "assessmentTest" -> user.isAccessAssessmentTest();
+                case "assessmentProd" -> user.isAccessAssessmentProd();
+                default -> false;
+            };
+            if (!allowed) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Geen toegang tot deze omgeving");
+            }
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Geen toegang");
+        }
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)

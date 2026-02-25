@@ -51,12 +51,24 @@ public class UserService {
                     password_hash VARCHAR(255) NOT NULL,
                     role ENUM('ADMIN', 'BUILDER') NOT NULL DEFAULT 'BUILDER',
                     active TINYINT(1) NOT NULL DEFAULT 1,
+                    access_assessment_test TINYINT(1) NOT NULL DEFAULT 0,
+                    access_assessment_prod TINYINT(1) NOT NULL DEFAULT 0,
+                    access_journeys_test TINYINT(1) NOT NULL DEFAULT 0,
+                    access_journeys_prod TINYINT(1) NOT NULL DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     INDEX idx_builder_users_username (username),
                     INDEX idx_builder_users_active (active)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            // Add columns if table already exists (migration)
+            for (String col : new String[]{"access_assessment_test", "access_assessment_prod", "access_journeys_test", "access_journeys_prod"}) {
+                try {
+                    jdbcTemplate.execute("ALTER TABLE builder_users ADD COLUMN " + col + " TINYINT(1) NOT NULL DEFAULT 0");
+                } catch (Exception ignored) {
+                    // Column already exists
+                }
+            }
             log.info("builder_users table ensured");
         } catch (Exception e) {
             log.warn("Could not create builder_users table: {}", e.getMessage());
@@ -77,8 +89,24 @@ public class UserService {
                     passwordEncoder.encode(password),
                     Role.ADMIN
                 );
+                admin.setAccessAssessmentTest(true);
+                admin.setAccessAssessmentProd(true);
+                admin.setAccessJourneysTest(true);
+                admin.setAccessJourneysProd(true);
                 userRepository.save(admin);
                 log.info("Seeded admin user: {}", DEFAULT_ADMIN_USERNAME);
+            } else {
+                // Ensure existing admin has all access flags (migration)
+                userRepository.findByUsername(DEFAULT_ADMIN_USERNAME).ifPresent(admin -> {
+                    if (!admin.isAccessAssessmentTest()) {
+                        admin.setAccessAssessmentTest(true);
+                        admin.setAccessAssessmentProd(true);
+                        admin.setAccessJourneysTest(true);
+                        admin.setAccessJourneysProd(true);
+                        userRepository.save(admin);
+                        log.info("Updated admin user access flags: {}", DEFAULT_ADMIN_USERNAME);
+                    }
+                });
             }
         } catch (Exception e) {
             log.warn("Could not seed admin user: {}", e.getMessage());
@@ -118,12 +146,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public BuilderUser updateUser(Long id, String displayName, Role role, Boolean active) {
+    public BuilderUser updateUser(Long id, String displayName, Role role, Boolean active,
+                                   Boolean accessAssessmentTest, Boolean accessAssessmentProd,
+                                   Boolean accessJourneysTest, Boolean accessJourneysProd) {
         BuilderUser user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Gebruiker niet gevonden: " + id));
         if (displayName != null) user.setDisplayName(displayName);
         if (role != null) user.setRole(role);
         if (active != null) user.setActive(active);
+        if (accessAssessmentTest != null) user.setAccessAssessmentTest(accessAssessmentTest);
+        if (accessAssessmentProd != null) user.setAccessAssessmentProd(accessAssessmentProd);
+        if (accessJourneysTest != null) user.setAccessJourneysTest(accessJourneysTest);
+        if (accessJourneysProd != null) user.setAccessJourneysProd(accessJourneysProd);
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
@@ -137,7 +171,7 @@ public class UserService {
     }
 
     public void deactivateUser(Long id) {
-        updateUser(id, null, null, false);
+        updateUser(id, null, null, false, null, null, null, null);
     }
 
     public boolean hasUsers() {

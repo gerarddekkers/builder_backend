@@ -27,9 +27,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        // If auth is disabled, return a dummy token with ADMIN role
+        // If auth is disabled, return a dummy token with ADMIN role + full access
         if (!authProperties.isEnabled()) {
-            return ResponseEntity.ok(new LoginResponse("auth-disabled", "ADMIN", "Developer", 0L));
+            return ResponseEntity.ok(new LoginResponse("auth-disabled", "ADMIN", "Developer", 0L,
+                new AccessFlags(true, true, true, true)));
         }
 
         // Try database login first
@@ -39,7 +40,11 @@ public class AuthController {
             String role = user.getRole().name();
             String token = tokenService.generateToken(user.getId(), user.getUsername(), role);
             String displayName = user.getDisplayName() != null ? user.getDisplayName() : user.getUsername();
-            return ResponseEntity.ok(new LoginResponse(token, role, displayName, user.getId()));
+            var access = new AccessFlags(
+                user.isAccessAssessmentTest(), user.isAccessAssessmentProd(),
+                user.isAccessJourneysTest(), user.isAccessJourneysProd()
+            );
+            return ResponseEntity.ok(new LoginResponse(token, role, displayName, user.getId(), access));
         }
 
         // Fallback: legacy env-var login (migration safety)
@@ -53,7 +58,8 @@ public class AuthController {
         if (authProperties.getUsername().equals(request.username()) &&
             authProperties.getPassword().equals(request.password())) {
             String token = tokenService.generateToken(request.username(), "ADMIN");
-            return ResponseEntity.ok(new LoginResponse(token, "ADMIN", request.username(), 0L));
+            return ResponseEntity.ok(new LoginResponse(token, "ADMIN", request.username(), 0L,
+                new AccessFlags(true, true, true, true)));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -68,5 +74,8 @@ public class AuthController {
     }
 
     public record LoginRequest(String username, String password) {}
-    public record LoginResponse(String token, String role, String displayName, Long userId) {}
+    public record AccessFlags(boolean assessmentTest, boolean assessmentProd,
+                              boolean journeysTest, boolean journeysProd) {}
+    public record LoginResponse(String token, String role, String displayName, Long userId,
+                                AccessFlags access) {}
 }

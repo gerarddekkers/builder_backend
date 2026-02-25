@@ -44,6 +44,17 @@ public class UserAdminController {
         Role role = parseRole(body.role);
         try {
             BuilderUser user = userService.createUser(body.username, body.displayName, body.password, role);
+            if (body.accessAssessmentTest != null) user.setAccessAssessmentTest(body.accessAssessmentTest);
+            if (body.accessAssessmentProd != null) user.setAccessAssessmentProd(body.accessAssessmentProd);
+            if (body.accessJourneysTest != null) user.setAccessJourneysTest(body.accessJourneysTest);
+            if (body.accessJourneysProd != null) user.setAccessJourneysProd(body.accessJourneysProd);
+            // Save again if access flags were set
+            if (body.accessAssessmentTest != null || body.accessAssessmentProd != null ||
+                body.accessJourneysTest != null || body.accessJourneysProd != null) {
+                user = userService.updateUser(user.getId(), null, null, null,
+                    body.accessAssessmentTest, body.accessAssessmentProd,
+                    body.accessJourneysTest, body.accessJourneysProd);
+            }
             return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
@@ -55,7 +66,9 @@ public class UserAdminController {
         requireAdmin(request);
         Role role = body.role != null ? parseRole(body.role) : null;
         try {
-            BuilderUser user = userService.updateUser(id, body.displayName, role, body.active);
+            BuilderUser user = userService.updateUser(id, body.displayName, role, body.active,
+                body.accessAssessmentTest, body.accessAssessmentProd,
+                body.accessJourneysTest, body.accessJourneysProd);
             return ResponseEntity.ok(UserResponse.from(user));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
@@ -104,11 +117,18 @@ public class UserAdminController {
 
     // ── DTOs ──────────────────────────────────────────────────────────
 
-    public record CreateUserRequest(String username, String displayName, String password, String role) {}
-    public record UpdateUserRequest(String displayName, String role, Boolean active) {}
+    public record CreateUserRequest(String username, String displayName, String password, String role,
+                                     Boolean accessAssessmentTest, Boolean accessAssessmentProd,
+                                     Boolean accessJourneysTest, Boolean accessJourneysProd) {}
+    public record UpdateUserRequest(String displayName, String role, Boolean active,
+                                     Boolean accessAssessmentTest, Boolean accessAssessmentProd,
+                                     Boolean accessJourneysTest, Boolean accessJourneysProd) {}
     public record ChangePasswordRequest(String password) {}
 
-    public record UserResponse(Long id, String username, String displayName, String role, boolean active, String createdAt) {
+    public record UserResponse(Long id, String username, String displayName, String role, boolean active,
+                               boolean accessAssessmentTest, boolean accessAssessmentProd,
+                               boolean accessJourneysTest, boolean accessJourneysProd,
+                               String createdAt) {
         static UserResponse from(BuilderUser user) {
             return new UserResponse(
                 user.getId(),
@@ -116,6 +136,10 @@ public class UserAdminController {
                 user.getDisplayName(),
                 user.getRole().name(),
                 user.isActive(),
+                user.isAccessAssessmentTest(),
+                user.isAccessAssessmentProd(),
+                user.isAccessJourneysTest(),
+                user.isAccessJourneysProd(),
                 user.getCreatedAt() != null ? user.getCreatedAt().toString() : null
             );
         }

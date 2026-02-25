@@ -1,10 +1,12 @@
 package com.mentesme.builder.api;
 
+import com.mentesme.builder.entity.BuilderUser;
 import com.mentesme.builder.model.LearningJourneyPublishRequest;
 import com.mentesme.builder.model.LearningJourneyPublishResult;
 import com.mentesme.builder.model.PublishEnvironment;
 import com.mentesme.builder.service.LearningJourneyIntegrationService;
 import com.mentesme.builder.service.LearningJourneyPublishService;
+import com.mentesme.builder.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -27,14 +29,17 @@ public class LearningJourneyPublishController {
 
     private final LearningJourneyPublishService publishService;
     private final LearningJourneyIntegrationService integrationService;
+    private final UserService userService;
     private final JdbcTemplate metroJdbcTemplate;
 
     public LearningJourneyPublishController(
             LearningJourneyPublishService publishService,
             LearningJourneyIntegrationService integrationService,
+            UserService userService,
             @Qualifier("metroJdbcTemplate") JdbcTemplate metroJdbcTemplate) {
         this.publishService = publishService;
         this.integrationService = integrationService;
+        this.userService = userService;
         this.metroJdbcTemplate = metroJdbcTemplate;
     }
 
@@ -43,7 +48,7 @@ public class LearningJourneyPublishController {
     public LearningJourneyPublishResult publish(
             @Valid @RequestBody LearningJourneyPublishRequest request,
             HttpServletRequest httpRequest) {
-        requireEditorOrAdmin(httpRequest);
+        requireAccess(httpRequest, "journeysTest");
         return publishService.publish(request, PublishEnvironment.TEST);
     }
 
@@ -52,7 +57,7 @@ public class LearningJourneyPublishController {
     public LearningJourneyPublishResult publishTest(
             @Valid @RequestBody LearningJourneyPublishRequest request,
             HttpServletRequest httpRequest) {
-        requireEditorOrAdmin(httpRequest);
+        requireAccess(httpRequest, "journeysTest");
         return publishService.publish(request, PublishEnvironment.TEST);
     }
 
@@ -61,10 +66,7 @@ public class LearningJourneyPublishController {
     public LearningJourneyPublishResult publishProduction(
             @Valid @RequestBody LearningJourneyPublishRequest request,
             HttpServletRequest httpRequest) {
-        String role = (String) httpRequest.getAttribute("userRole");
-        if (!"ADMIN".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "ADMIN role required for production publish");
-        }
+        requireAccess(httpRequest, "journeysProd");
         log.warn("PRODUCTION publish triggered for learning journey: {}", request.name());
         return publishService.publish(request, PublishEnvironment.PRODUCTION);
     }
@@ -73,19 +75,31 @@ public class LearningJourneyPublishController {
     public ResponseEntity<Map<String, String>> deleteJourney(
             @PathVariable long id,
             HttpServletRequest httpRequest) {
-        String role = (String) httpRequest.getAttribute("userRole");
-        if (!"ADMIN".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "ADMIN role required");
-        }
+        requireAccess(httpRequest, "journeysTest");
         log.warn("Deleting learning journey {}", id);
         integrationService.deleteJourney(id, metroJdbcTemplate);
         return ResponseEntity.ok(Map.of("status", "deleted", "id", String.valueOf(id)));
     }
 
-    private void requireEditorOrAdmin(HttpServletRequest httpRequest) {
-        String role = (String) httpRequest.getAttribute("userRole");
-        if (!"ADMIN".equals(role) && !"EDITOR".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "ADMIN or EDITOR role required");
+    private void requireAccess(HttpServletRequest httpRequest, String flag) {
+        String userIdStr = (String) httpRequest.getAttribute("userId");
+        if (userIdStr == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Geen toegang");
+        }
+        try {
+            long userId = Long.parseLong(userIdStr);
+            BuilderUser user = userService.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Gebruiker niet gevonden"));
+            boolean allowed = switch (flag) {
+                case "journeysTest" -> user.isAccessJourneysTest();
+                case "journeysProd" -> user.isAccessJourneysProd();
+                default -> false;
+            };
+            if (!allowed) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Geen toegang tot deze omgeving");
+            }
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Geen toegang");
         }
     }
 

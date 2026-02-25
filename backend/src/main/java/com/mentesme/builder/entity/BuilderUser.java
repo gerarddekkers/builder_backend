@@ -27,6 +27,18 @@ public class BuilderUser {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "access_assessment_test", nullable = false)
+    private boolean accessAssessmentTest = false;
+
+    @Column(name = "access_assessment_prod", nullable = false)
+    private boolean accessAssessmentProd = false;
+
+    @Column(name = "access_journeys_test", nullable = false)
+    private boolean accessJourneysTest = false;
+
+    @Column(name = "access_journeys_prod", nullable = false)
+    private boolean accessJourneysProd = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -69,6 +81,18 @@ public class BuilderUser {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public boolean isAccessAssessmentTest() { return accessAssessmentTest; }
+    public void setAccessAssessmentTest(boolean v) { this.accessAssessmentTest = v; }
+
+    public boolean isAccessAssessmentProd() { return accessAssessmentProd; }
+    public void setAccessAssessmentProd(boolean v) { this.accessAssessmentProd = v; }
+
+    public boolean isAccessJourneysTest() { return accessJourneysTest; }
+    public void setAccessJourneysTest(boolean v) { this.accessJourneysTest = v; }
+
+    public boolean isAccessJourneysProd() { return accessJourneysProd; }
+    public void setAccessJourneysProd(boolean v) { this.accessJourneysProd = v; }
 
     public enum Role {
         ADMIN, BUILDER
