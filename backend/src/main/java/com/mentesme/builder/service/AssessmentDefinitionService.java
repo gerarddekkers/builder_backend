@@ -35,10 +35,13 @@ public class AssessmentDefinitionService {
 
             var def = defOpt.get();
 
-            // Assessment naam wordt de categorie naam
+            // Assessment naam + beschrijving worden de categorie naam + beschrijving
             Map<String, CategoryTexts> categoryTexts = new LinkedHashMap<>();
             for (var entry : def.texts().entrySet()) {
-                categoryTexts.put(entry.getKey(), new CategoryTexts(entry.getValue().name()));
+                categoryTexts.put(entry.getKey(), new CategoryTexts(
+                        entry.getValue().name(),
+                        entry.getValue().description()
+                ));
             }
 
             // Alle competenties uit alle categorieën samenvoegen onder deze ene categorie
@@ -191,7 +194,7 @@ public class AssessmentDefinitionService {
         Map<Long, Map<String, CategoryTexts>> map = new HashMap<>();
         for (var row : rows) {
             map.computeIfAbsent(row.categoryId(), k -> new LinkedHashMap<>())
-                    .put(row.language(), new CategoryTexts(row.name()));
+                    .put(row.language(), new CategoryTexts(row.name(), null));
         }
         return map;
     }

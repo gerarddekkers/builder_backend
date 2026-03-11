@@ -37,7 +37,8 @@ public record AssessmentDefinitionResponse(
     ) {}
 
     public record CategoryTexts(
-            String name
+            String name,
+            String description
     ) {}
 
     public record CompetenceDef(
