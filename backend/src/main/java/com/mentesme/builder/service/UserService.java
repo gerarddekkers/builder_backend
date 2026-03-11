@@ -29,7 +29,7 @@ public class UserService {
 
     public UserService(BuilderUserRepository userRepository,
                        AuthProperties authProperties,
-                       JdbcTemplate jdbcTemplate) {
+                       @org.springframework.beans.factory.annotation.Qualifier("metroJdbcTemplate") JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.authProperties = authProperties;
         this.jdbcTemplate = jdbcTemplate;
