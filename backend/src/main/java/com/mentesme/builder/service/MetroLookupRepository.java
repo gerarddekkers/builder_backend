@@ -284,7 +284,14 @@ public class MetroLookupRepository {
                 for (int i = 0; i < validSql.size(); i++) {
                     String sql = validSql.get(i);
                     long start = System.currentTimeMillis();
-                    stmt.execute(sql);
+                    try {
+                        stmt.execute(sql);
+                    } catch (java.sql.SQLException e) {
+                        log.error("SQL statement #{} failed: {}", i, sql);
+                        throw new java.sql.SQLException(
+                                "Statement #" + i + " failed: " + sql + " | Error: " + e.getMessage(),
+                                e.getSQLState(), e.getErrorCode(), e);
+                    }
                     long elapsed = System.currentTimeMillis() - start;
                     String sqlPrefix = sql.length() > 80 ? sql.substring(0, 80) + "..." : sql;
                     perStmt.add(Map.of("i", i, "ms", elapsed, "sql", sqlPrefix));
