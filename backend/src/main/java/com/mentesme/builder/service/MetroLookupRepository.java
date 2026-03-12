@@ -257,12 +257,18 @@ public class MetroLookupRepository {
         return jdbcTemplate.execute((org.springframework.jdbc.core.ConnectionCallback<List<Map<String, Object>>>) conn -> {
             List<Map<String, Object>> perStmt = new ArrayList<>();
             try (java.sql.Statement stmt = conn.createStatement()) {
-                // Drop triggers if needed
+                // Drop triggers if needed (may fail on prod due to missing SUPER privilege)
+                boolean triggersDropped = false;
                 if (hasCqInserts) {
-                    for (String triggerName : CQ_TRIGGER_NAMES) {
-                        stmt.execute("DROP TRIGGER IF EXISTS " + triggerName);
+                    try {
+                        for (String triggerName : CQ_TRIGGER_NAMES) {
+                            stmt.execute("DROP TRIGGER IF EXISTS " + triggerName);
+                        }
+                        triggersDropped = true;
+                        log.info("Dropped {} competence_questions triggers", CQ_TRIGGER_NAMES.length);
+                    } catch (Exception e) {
+                        log.warn("Could not drop triggers (will execute with triggers active): {}", e.getMessage());
                     }
-                    log.info("Dropped {} competence_questions triggers", CQ_TRIGGER_NAMES.length);
                 }
 
                 long totalStart = System.currentTimeMillis();
@@ -281,12 +287,16 @@ public class MetroLookupRepository {
                 log.info("Raw JDBC: {} statements executed in {}ms ({}ms/stmt)",
                         validSql.size(), totalElapsed, totalElapsed / validSql.size());
 
-                // Recreate triggers (recalculation not needed for new/updated assessments)
-                if (hasCqInserts) {
-                    for (String createSql : CQ_TRIGGER_CREATE) {
-                        stmt.execute(createSql);
+                // Recreate triggers only if we successfully dropped them
+                if (hasCqInserts && triggersDropped) {
+                    try {
+                        for (String createSql : CQ_TRIGGER_CREATE) {
+                            stmt.execute(createSql);
+                        }
+                        log.info("Recreated {} competence_questions triggers", CQ_TRIGGER_CREATE.length);
+                    } catch (Exception e) {
+                        log.error("CRITICAL: Failed to recreate triggers: {}", e.getMessage());
                     }
-                    log.info("Recreated {} competence_questions triggers (skipping recalculation — not needed for publish)", CQ_TRIGGER_CREATE.length);
                 }
             }
             return perStmt;
