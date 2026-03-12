@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.nio.charset.StandardCharsets;
@@ -73,6 +74,38 @@ public class S3XmlUploadService {
      */
     public String buildUrl(String key) {
         return "https://" + s3Properties.getBucket() + ".s3.amazonaws.com/" + key;
+    }
+
+    /**
+     * Download XML content from S3 by key.
+     * Returns the XML as a String, or null if the object does not exist or download fails.
+     */
+    public String downloadXml(String key) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(s3Properties.getBucket())
+                    .key(key)
+                    .build();
+            byte[] bytes = s3Client.getObjectAsBytes(request).asByteArray();
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.warn("Failed to download s3://{}/{}: {}", s3Properties.getBucket(), key, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Extract S3 key from a full S3 URL (https://{bucket}.s3.amazonaws.com/{key}).
+     * Returns null if the URL doesn't match the expected format.
+     */
+    public String extractKeyFromUrl(String s3Url) {
+        if (s3Url == null || s3Url.isBlank()) return null;
+        String prefix = "https://" + s3Properties.getBucket() + ".s3.amazonaws.com/";
+        if (s3Url.startsWith(prefix)) {
+            return s3Url.substring(prefix.length());
+        }
+        log.warn("S3 URL does not match expected bucket format: {}", s3Url);
+        return null;
     }
 
     /**

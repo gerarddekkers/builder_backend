@@ -5,14 +5,10 @@ import com.mentesme.builder.model.definition.AssessmentDefinitionResponse.*;
 import com.mentesme.builder.service.AssessmentDefinitionRepository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -24,7 +20,6 @@ import java.util.stream.Collectors;
 public class AssessmentDefinitionService {
 
     private static final Logger log = LoggerFactory.getLogger(AssessmentDefinitionService.class);
-    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     // Matches <section title="Inleiding"> or <section title="Introduction"> → <p>...</p>
     private static final Pattern INTRO_SECTION_PATTERN = Pattern.compile(
@@ -32,6 +27,9 @@ public class AssessmentDefinitionService {
             Pattern.DOTALL);
 
     private final AssessmentDefinitionRepository repository;
+
+    @Autowired(required = false)
+    private S3XmlUploadService s3XmlUploadService;
 
     public AssessmentDefinitionService(AssessmentDefinitionRepository repository) {
         this.repository = repository;
@@ -220,40 +218,34 @@ public class AssessmentDefinitionService {
     }
 
     /**
-     * Download report XML van S3 URL en parse de rapport intro tekst uit de Inleiding/Introduction sectie.
-     * Returns null als de URL leeg is of het ophalen/parsen faalt.
+     * Download report XML van S3 en parse de rapport intro tekst uit de Inleiding/Introduction sectie.
+     * Gebruikt S3 client met IAM credentials (bucket is niet publiek).
+     * Returns null als de URL leeg is, S3 niet beschikbaar, of het ophalen/parsen faalt.
      */
     private String fetchReportIntro(String reportUrl) {
         if (reportUrl == null || reportUrl.isBlank()) return null;
-
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(reportUrl))
-                    .GET()
-                    .build();
-            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                log.warn("Failed to fetch report XML from {}: HTTP {}", reportUrl, response.statusCode());
-                return null;
-            }
-
-            Matcher matcher = INTRO_SECTION_PATTERN.matcher(response.body());
-            if (matcher.find()) {
-                // Unescape XML entities
-                return matcher.group(1)
-                        .replace("&amp;", "&")
-                        .replace("&lt;", "<")
-                        .replace("&gt;", ">")
-                        .replace("&quot;", "\"")
-                        .replace("&apos;", "'")
-                        .trim();
-            }
-            log.debug("No intro section found in report XML from {}", reportUrl);
-            return null;
-        } catch (Exception e) {
-            log.warn("Error fetching report intro from {}: {}", reportUrl, e.getMessage());
+        if (s3XmlUploadService == null) {
+            log.debug("S3 service not available, cannot fetch report intro");
             return null;
         }
+
+        String key = s3XmlUploadService.extractKeyFromUrl(reportUrl);
+        if (key == null) return null;
+
+        String xml = s3XmlUploadService.downloadXml(key);
+        if (xml == null) return null;
+
+        Matcher matcher = INTRO_SECTION_PATTERN.matcher(xml);
+        if (matcher.find()) {
+            return matcher.group(1)
+                    .replace("&amp;", "&")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&quot;", "\"")
+                    .replace("&apos;", "'")
+                    .trim();
+        }
+        log.debug("No intro section found in report XML from {}", reportUrl);
+        return null;
     }
 }
