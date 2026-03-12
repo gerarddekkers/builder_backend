@@ -287,10 +287,9 @@ public class MetroLookupRepository {
                     try {
                         stmt.execute(sql);
                     } catch (java.sql.SQLException e) {
-                        log.error("SQL statement #{} failed: {}", i, sql);
-                        throw new java.sql.SQLException(
-                                "Statement #" + i + " failed: " + sql + " | Error: " + e.getMessage(),
-                                e.getSQLState(), e.getErrorCode(), e);
+                        String msg = "SQL #" + i + " failed: " + sql + " → " + e.getMessage();
+                        log.error(msg);
+                        throw new RuntimeException(msg, e);
                     }
                     long elapsed = System.currentTimeMillis() - start;
                     String sqlPrefix = sql.length() > 80 ? sql.substring(0, 80) + "..." : sql;
