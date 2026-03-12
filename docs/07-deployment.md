@@ -62,6 +62,7 @@ graph TB
 | S3 Deploy Bucket | `elasticbeanstalk-eu-west-1-643502197318` |
 | S3 Content Bucket | `metro-platform` |
 | RDS Host (test) | `test-metro-db.cyi4arp1bouk.eu-west-1.rds.amazonaws.com` |
+| RDS Host (prod) | `metro-production.cyi4arp1bouk.eu-west-1.rds.amazonaws.com` |
 | RDS Database | `metro` |
 
 ## Deploy Scripts
@@ -189,6 +190,50 @@ Tags worden automatisch naar origin gepusht. Dit maakt het mogelijk om:
 - Te traceren welke code op welke omgeving draait
 - Terug te rollen naar een specifieke versie
 - Deploy-historie te bekijken via `git tag -l 'deploy/*'`
+
+## Belangrijk: Deploy Scripts NIET Parallel Runnen
+
+De deploy scripts gebruiken dezelfde `backend/target/` directory voor de Maven build. Als je meerdere deploys tegelijk start, overschrijven ze elkaars build artifacts → compilatie-errors of corrupte WAR bestanden.
+
+**Correct**: sequentieel deployen, bijv.:
+```bash
+./deploy-assessment.sh test
+# Wacht tot klaar
+./deploy-assessment.sh prod
+# Wacht tot klaar
+./deploy-journeys.sh test
+# etc.
+```
+
+## Dual Datasource (Test + Productie)
+
+De assessment builder environments kunnen naar **twee databases** schrijven:
+- **Test datasource** (altijd actief): geconfigureerd via `BUILDER_METRO_DATASOURCE_*` of fallback `DB_HOST`/`DB_PASSWORD`
+- **Productie datasource** (optioneel): alleen actief als `BUILDER_METRO_PROD_ENABLED=true`
+
+### Environment Variables voor Dual Datasource
+
+| Variabele | Doel | Verplicht |
+|-----------|------|-----------|
+| `BUILDER_METRO_PROD_ENABLED` | Activeer productie datasource | Ja (default: false) |
+| `BUILDER_METRO_PROD_URL` | JDBC URL voor productie DB | Ja als enabled |
+| `BUILDER_METRO_PROD_USERNAME` | Database user | Ja als enabled |
+| `BUILDER_METRO_PROD_PASSWORD` | Database wachtwoord | Ja als enabled |
+
+### Cross-Environment Publish
+
+Bij het publiceren van test → productie worden IDs gevalideerd tegen de **doeldatabase**:
+- `editQuestionnaireId` → `questionnaireExists()` check
+- `existingId` (competences) → `competenceExists()` check
+
+IDs die niet bestaan in de doeldatabase worden genegeerd; de builder valt terug op naam-lookup of maakt nieuwe entities aan.
+
+### Productie Database Beperkingen
+
+De `metro` user op productie RDS heeft **geen SUPER privilege** (binary logging actief). Dit betekent:
+- `DROP TRIGGER` / `CREATE TRIGGER` faalt → trigger bypass wordt overgeslagen
+- Publish werkt maar kan langzamer zijn door actieve triggers op `competence_questions`
+- Fix: `log_bin_trust_function_creators=1` instellen in de RDS parameter group (optioneel)
 
 ## Downtime
 

@@ -130,6 +130,8 @@ De `competence_questions` tabel heeft 3 triggers die bij elke INSERT/UPDATE/DELE
 
 **Resultaat**: 52 statements in 313ms (was 21.5 seconden), 20× sneller.
 
+**Let op productie**: De `metro` user op productie RDS heeft geen SUPER privilege (binary logging actief, `log_bin_trust_function_creators=0`). De trigger bypass vangt dit op met een try-catch — bij failure draaien triggers gewoon mee (langzamer maar functioneel).
+
 **Bestand**: `backend/src/main/java/com/mentesme/builder/service/MetroLookupRepository.java`
 
 ## Metro Database — Learning Journey Tabellen
@@ -268,3 +270,33 @@ SELECT MAX(id) FROM categories      -- +1 voor nieuwe category
 Dit wordt in één query opgehaald via `MetroLookupRepository.getAllMaxIds()`.
 
 **Risico**: Bij gelijktijdige inserts kan een race condition optreden. In de praktijk is dit acceptabel omdat de builder single-user per assessment werkt.
+
+### Cross-Environment Publish (test → productie)
+
+Bij het publiceren van een assessment naar een **andere** database (bijv. test → productie) kunnen IDs niet hergebruikt worden:
+
+- `editQuestionnaireId` uit test bestaat mogelijk niet op productie
+- `existingId` van competences uit test bestaat mogelijk niet op productie
+
+**Oplossing**: `MetroIntegrationService.generatePreview()` valideert alle IDs tegen de **doeldatabase** via:
+- `repo.questionnaireExists(id)` — check of het questionnaire ID bestaat
+- `repo.competenceExists(id)` — check of het competence ID bestaat
+
+Bij niet-bestaande IDs: fallback naar naam-lookup → nieuw aanmaken.
+
+**Bestanden**:
+- `backend/src/main/java/com/mentesme/builder/service/MetroIntegrationService.java`
+- `backend/src/main/java/com/mentesme/builder/service/MetroLookupRepository.java`
+
+### Schema Verschillen Test vs Productie
+
+De test en productie databases hebben kleine schema-verschillen:
+
+| Aspect | Test DB | Productie DB |
+|--------|---------|-------------|
+| `competences.createdAt` | niet aanwezig | `timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP` |
+| `competence_questions.cq_id` | gewone int | AUTO_INCREMENT |
+| `questionnaires.name` | UNIQUE KEY (30 chars) | UNIQUE KEY (30 chars) |
+| Trigger privileges | mastermetro heeft SUPER | metro heeft geen SUPER |
+
+**Let op**: Bij het toevoegen van nieuwe tabellen of kolommen op test, deze ook op productie aanmaken!
