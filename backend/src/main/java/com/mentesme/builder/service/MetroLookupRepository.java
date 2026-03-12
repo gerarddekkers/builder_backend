@@ -193,6 +193,15 @@ public class MetroLookupRepository {
      * Check if a questionnaire with the given name already exists.
      * @return Optional containing the questionnaire ID if found, empty otherwise.
      */
+    /**
+     * Check if a questionnaire with the given ID exists in the target database.
+     */
+    public boolean questionnaireExists(long questionnaireId) {
+        String sql = "SELECT COUNT(*) FROM questionnaires WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, questionnaireId);
+        return count != null && count > 0;
+    }
+
     public Optional<Long> findQuestionnaireIdByName(String name) {
         if (name == null || name.isBlank()) {
             return Optional.empty();

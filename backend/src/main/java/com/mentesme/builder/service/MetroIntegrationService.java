@@ -50,11 +50,11 @@ public class MetroIntegrationService {
         String truncatedName = truncate(assessmentName, 30, warnings);
 
         // Determine questionnaire ID:
-        // 1. If editQuestionnaireId is set, always use that (even if name changed)
+        // 1. If editQuestionnaireId is set AND exists in target DB, use that (update)
         // 2. Otherwise, look up by name (existing re-publish behavior)
         // 3. Otherwise, create new
         Long existingQuestionnaireId;
-        if (request.editQuestionnaireId() != null) {
+        if (request.editQuestionnaireId() != null && repo.questionnaireExists(request.editQuestionnaireId())) {
             existingQuestionnaireId = request.editQuestionnaireId();
         } else {
             existingQuestionnaireId = repo.findQuestionnaireIdByName(truncatedName).orElse(null);
