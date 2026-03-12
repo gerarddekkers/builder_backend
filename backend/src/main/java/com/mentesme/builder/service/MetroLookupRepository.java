@@ -202,6 +202,15 @@ public class MetroLookupRepository {
         return count != null && count > 0;
     }
 
+    /**
+     * Check if a competence with the given ID exists in the target database.
+     */
+    public boolean competenceExists(long competenceId) {
+        String sql = "SELECT COUNT(*) FROM competences WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, competenceId);
+        return count != null && count > 0;
+    }
+
     public Optional<Long> findQuestionnaireIdByName(String name) {
         if (name == null || name.isBlank()) {
             return Optional.empty();

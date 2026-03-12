@@ -153,11 +153,15 @@ public class MetroIntegrationService {
             }
 
             Long competenceId = input.existingId();
+            // Verify existingId actually exists in target DB (may differ between test/prod)
+            if (competenceId != null && !repo.competenceExists(competenceId)) {
+                competenceId = null;
+            }
             if (competenceId == null) {
                 competenceId = repo.findCompetenceIdByName(input.name()).orElse(null);
             }
 
-            if (competenceId == null && input.isNew()) {
+            if (competenceId == null && (input.isNew() || input.existingId() != null)) {
                 competenceId = competenceSeq++;
                 String competenceName = safeTrim(input.name());
                 String description = safeTrim(input.description());
