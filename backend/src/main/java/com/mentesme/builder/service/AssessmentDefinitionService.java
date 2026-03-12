@@ -3,16 +3,33 @@ package com.mentesme.builder.service;
 import com.mentesme.builder.model.definition.AssessmentDefinitionResponse;
 import com.mentesme.builder.model.definition.AssessmentDefinitionResponse.*;
 import com.mentesme.builder.service.AssessmentDefinitionRepository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @ConditionalOnProperty(name = "builder.metro.enabled", havingValue = "true")
 public class AssessmentDefinitionService {
+
+    private static final Logger log = LoggerFactory.getLogger(AssessmentDefinitionService.class);
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+
+    // Matches <section title="Inleiding"> or <section title="Introduction"> → <p>...</p>
+    private static final Pattern INTRO_SECTION_PATTERN = Pattern.compile(
+            "<section\\s+title=\"(?:Inleiding|Introduction)\"[^>]*>\\s*<p>(.*?)</p>",
+            Pattern.DOTALL);
 
     private final AssessmentDefinitionRepository repository;
 
@@ -35,12 +52,15 @@ public class AssessmentDefinitionService {
 
             var def = defOpt.get();
 
-            // Assessment naam + beschrijving worden de categorie naam + beschrijving
+            // Assessment naam wordt de categorie naam.
+            // Categorie beschrijving = rapport intro uit het report XML op S3 (niet de S3 URL zelf).
             Map<String, CategoryTexts> categoryTexts = new LinkedHashMap<>();
             for (var entry : def.texts().entrySet()) {
+                String reportUrl = entry.getValue().description(); // dit is de S3 URL naar report XML
+                String introText = fetchReportIntro(reportUrl);
                 categoryTexts.put(entry.getKey(), new CategoryTexts(
                         entry.getValue().name(),
-                        entry.getValue().description()
+                        introText
                 ));
             }
 
@@ -197,5 +217,43 @@ public class AssessmentDefinitionService {
                     .put(row.language(), new CategoryTexts(row.name(), null));
         }
         return map;
+    }
+
+    /**
+     * Download report XML van S3 URL en parse de rapport intro tekst uit de Inleiding/Introduction sectie.
+     * Returns null als de URL leeg is of het ophalen/parsen faalt.
+     */
+    private String fetchReportIntro(String reportUrl) {
+        if (reportUrl == null || reportUrl.isBlank()) return null;
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(reportUrl))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                log.warn("Failed to fetch report XML from {}: HTTP {}", reportUrl, response.statusCode());
+                return null;
+            }
+
+            Matcher matcher = INTRO_SECTION_PATTERN.matcher(response.body());
+            if (matcher.find()) {
+                // Unescape XML entities
+                return matcher.group(1)
+                        .replace("&amp;", "&")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">")
+                        .replace("&quot;", "\"")
+                        .replace("&apos;", "'")
+                        .trim();
+            }
+            log.debug("No intro section found in report XML from {}", reportUrl);
+            return null;
+        } catch (Exception e) {
+            log.warn("Error fetching report intro from {}: {}", reportUrl, e.getMessage());
+            return null;
+        }
     }
 }
